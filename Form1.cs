@@ -144,7 +144,7 @@ namespace goblinRevolver
                 process.Start();
             }
         }
-
+        // 8====D test
         private void enable(object sender, EventArgs e)
         {
             if (lvwDevices.SelectedItems[0].Text != null)
