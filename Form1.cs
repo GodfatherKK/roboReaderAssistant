@@ -39,9 +39,7 @@ namespace goblinRevolver
 
             foreach (var usbDevice in usbDevices)
             {
-                //Console.WriteLine("Device ID: {0}, PNP Device ID: {1}, Description: {2}", usbDevice.DeviceID, usbDevice.PnpDeviceID, usbDevice.Description);
-
-          
+                //Console.WriteLine("Device ID: {0}, PNP Device ID: {1}, Description: {2}", usbDevice.DeviceID, usbDevice.PnpDeviceID, usbDevice.Description);          
 
                 //Add items in the listview
                 string[] arr = new string[4];
@@ -133,29 +131,56 @@ namespace goblinRevolver
 
         private void disable(object sender, EventArgs e)
         {
-            string deviceID = lvwDevices.SelectedItems[0].Text;
-            Console.WriteLine(deviceID);
+            if (lvwDevices.SelectedItems[0].Text != null)
+            {
+                string deviceID = lvwDevices.SelectedItems[0].Text;
+                System.Diagnostics.Process process = new System.Diagnostics.Process();
+                System.Diagnostics.ProcessStartInfo startInfo = new System.Diagnostics.ProcessStartInfo();
+                startInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
+                startInfo.FileName = "C:\\repo\\devcon\\devcon64.exe";
+                startInfo.Arguments = "disable \"@" + deviceID + "\"";
+                startInfo.Verb = "runas";
+                process.StartInfo = startInfo;
+                process.Start();
+            }
+        }
+
+        private void enable(object sender, EventArgs e)
+        {
+            if (lvwDevices.SelectedItems[0].Text != null)
+            {
+                string deviceID = lvwDevices.SelectedItems[0].Text;
+                System.Diagnostics.Process process = new System.Diagnostics.Process();
+                System.Diagnostics.ProcessStartInfo startInfo = new System.Diagnostics.ProcessStartInfo();
+                startInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
+                startInfo.FileName = "C:\\repo\\devcon\\devcon64.exe";
+                startInfo.Arguments = "enable \"@" + deviceID + "\"";
+                startInfo.Verb = "runas";
+                process.StartInfo = startInfo;
+                process.Start();
+            }
+           
+        }
+
+        private void openCompiler(object sender, EventArgs e)
+        {         
             System.Diagnostics.Process process = new System.Diagnostics.Process();
             System.Diagnostics.ProcessStartInfo startInfo = new System.Diagnostics.ProcessStartInfo();
             startInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
-            startInfo.FileName = "C:\\repo\\devcon\\devcon64.exe"; 
-            startInfo.Arguments = "disable \"@" + deviceID + "\"";
-            Console.WriteLine(startInfo.Arguments); 
+            startInfo.FileName = "C:\\repo\\goblinRevolver\\ADR_Projekt_01_GoblinRevolver\\PE600\\GOB Compiler\\GOB Compiler-2.02.05.exe";
+            startInfo.Arguments = "";
             startInfo.Verb = "runas";
             process.StartInfo = startInfo;
             process.Start();
         }
 
-        private void enable(object sender, EventArgs e)
-        {
-            string deviceID = lvwDevices.SelectedItems[0].Text;
-            Console.WriteLine(deviceID);
+        private void openUploader(object sender, EventArgs e)
+        {       
             System.Diagnostics.Process process = new System.Diagnostics.Process();
             System.Diagnostics.ProcessStartInfo startInfo = new System.Diagnostics.ProcessStartInfo();
             startInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
-            startInfo.FileName = "cmd.exe";
-            startInfo.Arguments = "C:\\repo\\devcon\\devcon64.exe enable \"@" + deviceID + "\"";
-            Console.WriteLine(startInfo.Arguments);
+            startInfo.FileName = "C:\\repo\\goblinRevolver\\ADR_Projekt_01_GoblinRevolver\\PE600\\GOB Uploarder\\GOB Uploader-U0.P0.05.J.exe";
+            startInfo.Arguments = "";
             startInfo.Verb = "runas";
             process.StartInfo = startInfo;
             process.Start();
