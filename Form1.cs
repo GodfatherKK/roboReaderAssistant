@@ -154,7 +154,7 @@ namespace goblinRevolver
         {
             try
             {
-                if (lvwDevices.SelectedItems[0].Text != null)
+                if (lvwDevices.SelectedItems.Count == 1)
                 {
                     string deviceID = lvwDevices.SelectedItems[0].Text;
                     System.Diagnostics.Process process = new System.Diagnostics.Process();
@@ -173,6 +173,12 @@ namespace goblinRevolver
                     process.StartInfo = startInfo;
                     process.Start();
                 }
+                else
+                {
+                    MessageBox.Show("Please select a device first.");
+                    return;
+                }
+                
             }
             catch (Exception exp)
             {
@@ -187,7 +193,7 @@ namespace goblinRevolver
         {
             try
             {
-                if (lvwDevices.SelectedItems[0].Text != null)
+                if (lvwDevices.SelectedItems.Count == 1)
                 {
                     string deviceID = lvwDevices.SelectedItems[0].Text;
                     System.Diagnostics.Process process = new System.Diagnostics.Process();
@@ -205,6 +211,11 @@ namespace goblinRevolver
                     startInfo.Verb = "runas";
                     process.StartInfo = startInfo;
                     process.Start();
+                }
+                else
+                {
+                    MessageBox.Show("Please select a device first.");
+                    return;
                 }
             }
             catch (Exception exp)
