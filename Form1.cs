@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Management;
 using System.Windows.Forms;
+using System.IO;
+using System.Threading.Tasks;
 
 
 
@@ -72,7 +74,8 @@ namespace goblinRevolver
 
 
 
-        // ######### USB ##########################################################################################        
+        // ######### TABLE ########################################################################################
+
 
         // UPDATE USB DEVICES TABLE
         private void update_USBDevicesTable()
@@ -101,8 +104,52 @@ namespace goblinRevolver
             {
                 MessageBox.Show("Exception: " + exp.Message);
             }
-            
+
         }
+
+
+        // BUTTON: EXPORT TO TEXT FILE
+        private void exportToTextFile(object sender, EventArgs e)
+        {
+            exportToTextFile();
+        }
+
+
+        // EXPORT TO TEXT FILE
+        private void exportToTextFile()
+        {
+            try
+            {
+                List<string> list = new List<string>();
+
+                var usbDevices = GetUSBDevices();
+
+                foreach (var usbDevice in usbDevices)
+                {
+                    string device = usbDevice.DeviceID.ToString() + ", " + usbDevice.PnpDeviceID.ToString() + ", " + usbDevice.Description.ToString();
+                    list.Add(device);
+                }
+
+                String[] lines = list.ToArray();
+
+                File.WriteAllLines("USBDevices.txt", lines);
+            }
+            catch (Exception exp)
+            {
+                MessageBox.Show("Exception: " + exp.Message);
+            }
+        }
+
+
+
+        // ########################################################################################################
+
+
+
+
+        // ######### USB ##########################################################################################        
+
+
 
         // GET USB DEVICES
         static List<USBDeviceInfo> GetUSBDevices()
@@ -340,6 +387,8 @@ namespace goblinRevolver
             // default to empty string
             return "";
         }
+
+     
 
         // ########################################################################################################
 

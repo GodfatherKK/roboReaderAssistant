@@ -37,8 +37,11 @@
             this.button4 = new System.Windows.Forms.Button();
             this.button6 = new System.Windows.Forms.Button();
             this.OS_bit = new System.Windows.Forms.Label();
+            this.groupBox3 = new System.Windows.Forms.GroupBox();
+            this.button5 = new System.Windows.Forms.Button();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
+            this.groupBox3.SuspendLayout();
             this.SuspendLayout();
             // 
             // button1
@@ -100,9 +103,9 @@
             // 
             this.groupBox2.Controls.Add(this.button4);
             this.groupBox2.Controls.Add(this.button6);
-            this.groupBox2.Location = new System.Drawing.Point(826, 769);
+            this.groupBox2.Location = new System.Drawing.Point(662, 769);
             this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(545, 92);
+            this.groupBox2.Size = new System.Drawing.Size(321, 92);
             this.groupBox2.TabIndex = 5;
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Goblin Software";
@@ -136,11 +139,33 @@
             this.OS_bit.Size = new System.Drawing.Size(0, 16);
             this.OS_bit.TabIndex = 6;
             // 
+            // groupBox3
+            // 
+            this.groupBox3.Controls.Add(this.button5);
+            this.groupBox3.Location = new System.Drawing.Point(1011, 769);
+            this.groupBox3.Name = "groupBox3";
+            this.groupBox3.Size = new System.Drawing.Size(158, 92);
+            this.groupBox3.TabIndex = 6;
+            this.groupBox3.TabStop = false;
+            this.groupBox3.Text = "Export";
+            // 
+            // button5
+            // 
+            this.button5.Location = new System.Drawing.Point(26, 38);
+            this.button5.Margin = new System.Windows.Forms.Padding(4);
+            this.button5.Name = "button5";
+            this.button5.Size = new System.Drawing.Size(100, 28);
+            this.button5.TabIndex = 0;
+            this.button5.Text = "Export";
+            this.button5.UseVisualStyleBackColor = true;
+            this.button5.Click += new System.EventHandler(this.exportToTextFile);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1557, 887);
+            this.Controls.Add(this.groupBox3);
             this.Controls.Add(this.OS_bit);
             this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.groupBox1);
@@ -151,6 +176,7 @@
             this.Load += new System.EventHandler(this.Form1_Load);
             this.groupBox1.ResumeLayout(false);
             this.groupBox2.ResumeLayout(false);
+            this.groupBox3.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -167,6 +193,8 @@
         private System.Windows.Forms.Button button4;
         private System.Windows.Forms.Button button6;
         private System.Windows.Forms.Label OS_bit;
+        private System.Windows.Forms.GroupBox groupBox3;
+        private System.Windows.Forms.Button button5;
     }
 }
 
