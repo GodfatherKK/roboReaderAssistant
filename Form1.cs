@@ -1,24 +1,27 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
 using System.Management;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
+
 
 
 namespace goblinRevolver
 {
+
+
+
     public partial class Form1 : Form
     {
+        // INIT
         public Form1()
         {
             InitializeComponent();
         }
 
+
+        // ######### EVENTS #######################################################################################
+
+        // ONLOAD HOOK
         private void Form1_Load(object sender, EventArgs e)
         {
             lvwDevices.View = View.Details;
@@ -28,19 +31,29 @@ namespace goblinRevolver
             lvwDevices.Columns.Add("DeviceID", 390);
             lvwDevices.Columns.Add("PNPDeviceID", 390);
             lvwDevices.Columns.Add("Description", 350);
+
+            OS_bit.Text = getIs64BitOSText();
+
+            update_USBDevicesTable();
         }
 
-        private void button1_Click(object sender, EventArgs e)
-        {
+        // ########################################################################################################
 
+
+
+
+        // ######### USB ##########################################################################################        
+
+
+        // UPDATE USB DEVICES TABLE
+        private void update_USBDevicesTable()
+        {
             lvwDevices.Items.Clear();
 
             var usbDevices = GetUSBDevices();
 
             foreach (var usbDevice in usbDevices)
             {
-                //Console.WriteLine("Device ID: {0}, PNP Device ID: {1}, Description: {2}", usbDevice.DeviceID, usbDevice.PnpDeviceID, usbDevice.Description);          
-
                 //Add items in the listview
                 string[] arr = new string[4];
                 ListViewItem itm;
@@ -51,50 +64,10 @@ namespace goblinRevolver
                 arr[2] = usbDevice.Description.ToString();
                 itm = new ListViewItem(arr);
                 lvwDevices.Items.Add(itm);
-
-                /*
-                ListViewItem new_item = lvwDevices.Items.Add(
-                    usbDevice.DeviceID.ToString());
-                new_item.SubItems.Add(
-                    usbDevice.PnpDeviceID.ToString());
-                new_item.SubItems.Add(
-                    usbDevice.Description.ToString());
-                */
             }
-
-            //Console.Read();
-
-            /*
-            ManagementObjectSearcher device_searcher =
-            new ManagementObjectSearcher("SELECT * FROM Win32_USBHub");
-            foreach (ManagementObject usb_device in device_searcher.Get())
-            {
-                ListViewItem new_item = lvwDevices.Items.Add(
-                    usb_device.Properties["DeviceID"].Value.ToString());
-                new_item.SubItems.Add(
-                    usb_device.Properties["PNPDeviceID"].Value.ToString());
-                new_item.SubItems.Add(
-                    usb_device.Properties["Description"].Value.ToString());
-            }
-            */
         }
 
-        static List<ManagementBaseObject> GetLogicalDevices()
-        {
-            List<ManagementBaseObject> devices = new List<ManagementBaseObject>();
-            ManagementObjectCollection collection;
-            using (var searcher = new ManagementObjectSearcher("root\\CIMV2",
-                                  @"Select * From CIM_LogicalDevice"))
-                collection = searcher.Get();
-            foreach (var device in collection)
-            {
-                devices.Add(device);
-            }
-            collection.Dispose();
-            return devices;
-        }
-
-
+        // GET USB DEVICES
         static List<USBDeviceInfo> GetUSBDevices()
         {
             List<USBDeviceInfo> devices = new List<USBDeviceInfo>();
@@ -116,6 +89,7 @@ namespace goblinRevolver
             return devices;
         }
 
+        // TYPE: USBDeviceInfo
         class USBDeviceInfo
         {
             public USBDeviceInfo(string deviceID, string pnpDeviceID, string description)
@@ -129,7 +103,8 @@ namespace goblinRevolver
             public string Description { get; private set; }
         }
 
-        private void disable(object sender, EventArgs e)
+        // BUTTON: DISABLE USB
+        private void btn_disableUSB(object sender, EventArgs e)
         {
             if (lvwDevices.SelectedItems[0].Text != null)
             {
@@ -137,15 +112,23 @@ namespace goblinRevolver
                 System.Diagnostics.Process process = new System.Diagnostics.Process();
                 System.Diagnostics.ProcessStartInfo startInfo = new System.Diagnostics.ProcessStartInfo();
                 startInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
-                startInfo.FileName = "C:\\repo\\devcon\\devcon64.exe";
+                if (getIs64BitOS())
+                {
+                    startInfo.FileName = "devcon64.exe";
+                }
+                else
+                {
+                    startInfo.FileName = "devcon.exe";
+                }                    
                 startInfo.Arguments = "disable \"@" + deviceID + "\"";
                 startInfo.Verb = "runas";
                 process.StartInfo = startInfo;
                 process.Start();
             }
         }
-        // 8====D test
-        private void enable(object sender, EventArgs e)
+
+        // BUTTON: ENABLE USB
+        private void btn_enableUSB(object sender, EventArgs e)
         {
             if (lvwDevices.SelectedItems[0].Text != null)
             {
@@ -153,37 +136,96 @@ namespace goblinRevolver
                 System.Diagnostics.Process process = new System.Diagnostics.Process();
                 System.Diagnostics.ProcessStartInfo startInfo = new System.Diagnostics.ProcessStartInfo();
                 startInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
-                startInfo.FileName = "C:\\repo\\devcon\\devcon64.exe";
+                if (getIs64BitOS())
+                {
+                    startInfo.FileName = "devcon64.exe";
+                }
+                else
+                {
+                    startInfo.FileName = "devcon.exe";
+                }
                 startInfo.Arguments = "enable \"@" + deviceID + "\"";
                 startInfo.Verb = "runas";
                 process.StartInfo = startInfo;
                 process.Start();
             }
-           
+
         }
 
+        // BUTTON: REFRESH USB DEVICES
+        private void btn_refreshUSBDevices(object sender, EventArgs e)
+        {
+            update_USBDevicesTable();
+        }
+
+
+
+        // ########################################################################################################
+
+
+
+
+        // ######### GOBLIN COMPILER AND UPLAODER #################################################################        
+
+        // OPEN GOBLIN COMPILER
         private void openCompiler(object sender, EventArgs e)
-        {         
+        {
             System.Diagnostics.Process process = new System.Diagnostics.Process();
             System.Diagnostics.ProcessStartInfo startInfo = new System.Diagnostics.ProcessStartInfo();
             startInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
-            startInfo.FileName = "C:\\repo\\goblinRevolver\\ADR_Projekt_01_GoblinRevolver\\PE600\\GOB Compiler\\GOB Compiler-2.02.05.exe";
+            startInfo.FileName = "Compiler.exe";
             startInfo.Arguments = "";
             startInfo.Verb = "runas";
             process.StartInfo = startInfo;
             process.Start();
         }
 
+        // OPEN GOBLIN UPLOADER
         private void openUploader(object sender, EventArgs e)
-        {       
+        {
             System.Diagnostics.Process process = new System.Diagnostics.Process();
             System.Diagnostics.ProcessStartInfo startInfo = new System.Diagnostics.ProcessStartInfo();
             startInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
-            startInfo.FileName = "C:\\repo\\goblinRevolver\\ADR_Projekt_01_GoblinRevolver\\PE600\\GOB Uploarder\\GOB Uploader-U0.P0.05.J.exe";
+            startInfo.FileName = "Uploader.exe";
             startInfo.Arguments = "";
             startInfo.Verb = "runas";
             process.StartInfo = startInfo;
             process.Start();
         }
+
+        // ########################################################################################################
+
+
+
+
+        // ######### ENVIRONMENT ##################################################################################
+
+
+        // CHECK IF OS IS 64-BIT
+        private bool getIs64BitOS() 
+        {
+            return Environment.Is64BitOperatingSystem;
+        }
+
+
+        // GET TEXT FOR IS 64-BIT OS LABEL
+        private string getIs64BitOSText()
+        {
+            bool is64Bit = getIs64BitOS();
+
+            if (is64Bit)
+            { 
+                return "64 Bit System"; 
+            }
+            else
+            { 
+                return "32 Bit System"; 
+            }
+            return "";
+
+        }
+
+        // ########################################################################################################
+
     }
 }

@@ -36,6 +36,7 @@
             this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.button4 = new System.Windows.Forms.Button();
             this.button6 = new System.Windows.Forms.Button();
+            this.OS_bit = new System.Windows.Forms.Label();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.SuspendLayout();
@@ -49,7 +50,7 @@
             this.button1.TabIndex = 0;
             this.button1.Text = "Refresh";
             this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.button1_Click);
+            this.button1.Click += new System.EventHandler(this.btn_refreshUSBDevices);
             // 
             // lvwDevices
             // 
@@ -71,7 +72,7 @@
             this.button2.TabIndex = 2;
             this.button2.Text = "Disable";
             this.button2.UseVisualStyleBackColor = true;
-            this.button2.Click += new System.EventHandler(this.disable);
+            this.button2.Click += new System.EventHandler(this.btn_disableUSB);
             // 
             // button3
             // 
@@ -81,7 +82,7 @@
             this.button3.TabIndex = 3;
             this.button3.Text = "Enable";
             this.button3.UseVisualStyleBackColor = true;
-            this.button3.Click += new System.EventHandler(this.enable);
+            this.button3.Click += new System.EventHandler(this.btn_enableUSB);
             // 
             // groupBox1
             // 
@@ -127,11 +128,20 @@
             this.button6.UseVisualStyleBackColor = true;
             this.button6.Click += new System.EventHandler(this.openUploader);
             // 
+            // OS_bit
+            // 
+            this.OS_bit.AutoSize = true;
+            this.OS_bit.Location = new System.Drawing.Point(1400, 844);
+            this.OS_bit.Name = "OS_bit";
+            this.OS_bit.Size = new System.Drawing.Size(0, 16);
+            this.OS_bit.TabIndex = 6;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1557, 887);
+            this.Controls.Add(this.OS_bit);
             this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.groupBox1);
             this.Controls.Add(this.lvwDevices);
@@ -142,6 +152,7 @@
             this.groupBox1.ResumeLayout(false);
             this.groupBox2.ResumeLayout(false);
             this.ResumeLayout(false);
+            this.PerformLayout();
 
         }
 
@@ -155,6 +166,7 @@
         private System.Windows.Forms.GroupBox groupBox2;
         private System.Windows.Forms.Button button4;
         private System.Windows.Forms.Button button6;
+        private System.Windows.Forms.Label OS_bit;
     }
 }
 
