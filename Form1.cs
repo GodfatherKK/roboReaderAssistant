@@ -9,11 +9,12 @@ using System.Threading.Tasks;
 
 namespace goblinRevolver
 {
-
+    
 
 
     public partial class Form1 : Form
     {
+        string targetDeviceID = "";
 
         // ######### INIT #########################################################################################
 
@@ -76,6 +77,11 @@ namespace goblinRevolver
 
         // ######### TABLE ########################################################################################
 
+        // SELECTION CHANGED
+        private void selectionChanged(object sender, EventArgs e)
+        {
+         
+        }
 
         // UPDATE USB DEVICES TABLE
         private void update_USBDevicesTable()
@@ -196,26 +202,26 @@ namespace goblinRevolver
             public string Description { get; private set; }
         }
 
-        // BUTTON: DISABLE USB
-        private void btn_disableUSB(object sender, EventArgs e)
+        // USB HANDLING
+        private void handleUSBDevice(string action)
         {
             try
             {
                 if (lvwDevices.SelectedItems.Count == 1)
                 {
-                    string deviceID = lvwDevices.SelectedItems[0].Text;
+                    string deviceID = lvwDevices.SelectedItems[0].SubItems[1].Text;
                     System.Diagnostics.Process process = new System.Diagnostics.Process();
                     System.Diagnostics.ProcessStartInfo startInfo = new System.Diagnostics.ProcessStartInfo();
                     startInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
                     if (getIs64BitOS())
                     {
-                        startInfo.FileName = "devcon64.exe";
+                        startInfo.FileName = "pnputil.exe";                        
                     }
                     else
                     {
-                        startInfo.FileName = "devcon.exe";
+                        startInfo.FileName = "pnputil.exe";                        
                     }
-                    startInfo.Arguments = "disable \"@" + deviceID + "\"";
+                    startInfo.Arguments = action + " " + deviceID;
                     startInfo.Verb = "runas";
                     process.StartInfo = startInfo;
                     process.Start();
@@ -225,53 +231,35 @@ namespace goblinRevolver
                     MessageBox.Show("Please select a device first.");
                     return;
                 }
-                
             }
             catch (Exception exp)
             {
                 MessageBox.Show("Exception: " + exp.Message);
             }
+        }
 
-            
+        // BUTTON: DISABLE USB
+        private void btn_disableUSB(object sender, EventArgs e)
+        {
+            handleUSBDevice("/disable-device");
         }
 
         // BUTTON: ENABLE USB
         private void btn_enableUSB(object sender, EventArgs e)
         {
-            try
-            {
-                if (lvwDevices.SelectedItems.Count == 1)
-                {
-                    string deviceID = lvwDevices.SelectedItems[0].Text;
-                    System.Diagnostics.Process process = new System.Diagnostics.Process();
-                    System.Diagnostics.ProcessStartInfo startInfo = new System.Diagnostics.ProcessStartInfo();
-                    startInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
-                    if (getIs64BitOS())
-                    {
-                        startInfo.FileName = "devcon64.exe";
-                    }
-                    else
-                    {
-                        startInfo.FileName = "devcon.exe";
-                    }
-                    startInfo.Arguments = "enable \"@" + deviceID + "\"";
-                    startInfo.Verb = "runas";
-                    process.StartInfo = startInfo;
-                    process.Start();
-                }
-                else
-                {
-                    MessageBox.Show("Please select a device first.");
-                    return;
-                }
-            }
-            catch (Exception exp)
-            {
-                MessageBox.Show("Exception: " + exp.Message);
-            }
+            handleUSBDevice("/enable-device");
+        }
+        
+        // BUTTON: REMOVE USB
+        private void btn_removeUSB(object sender, EventArgs e)
+        {
+            handleUSBDevice("/remove-device");
+        }
 
-            
-
+        // BUTTON: SCAN USB
+        private void btn_scan(object sender, EventArgs e)
+        {
+            handleUSBDevice("/scan-devices");
         }
 
         // BUTTON: REFRESH USB DEVICES
@@ -389,6 +377,10 @@ namespace goblinRevolver
         }
 
      
+
+
+
+
 
         // ########################################################################################################
 

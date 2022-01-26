@@ -82,8 +82,6 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Compiler.exe" />
-    <Content Include="devcon.exe" />
-    <Content Include="devcon64.exe" />
     <Content Include="Uploader.exe" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
