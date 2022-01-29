@@ -205,11 +205,16 @@ namespace goblinRevolver
         // USB HANDLING
         private void handleUSBDevice(string action)
         {
-            try
+            /*if (lvwDevices.SelectedItems.Count == 0)
+            {                
+                return;
+            }*/
+                    
+
+            if (action == "/scan-devices")
             {
-                if (lvwDevices.SelectedItems.Count == 1)
-                {
-                    string deviceID = lvwDevices.SelectedItems[0].SubItems[1].Text;
+                try
+                {                                  
                     System.Diagnostics.Process process = new System.Diagnostics.Process();
                     System.Diagnostics.ProcessStartInfo startInfo = new System.Diagnostics.ProcessStartInfo();
                     startInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
@@ -221,21 +226,51 @@ namespace goblinRevolver
                     {
                         startInfo.FileName = "pnputil.exe";                        
                     }
-                    startInfo.Arguments = action + " " + deviceID;
+                    startInfo.Arguments = action;
                     startInfo.Verb = "runas";
                     process.StartInfo = startInfo;
-                    process.Start();
+                    process.Start();                 
                 }
-                else
+                catch (Exception exp)
                 {
-                    MessageBox.Show("Please select a device first.");
-                    return;
+                    MessageBox.Show("Exception: " + exp.Message);
                 }
             }
-            catch (Exception exp)
+            else
             {
-                MessageBox.Show("Exception: " + exp.Message);
+                try
+                {
+                    if (lvwDevices.SelectedItems.Count == 1)
+                    {
+                        string deviceID = lvwDevices.SelectedItems[0].SubItems[1].Text;
+                        System.Diagnostics.Process process = new System.Diagnostics.Process();
+                        System.Diagnostics.ProcessStartInfo startInfo = new System.Diagnostics.ProcessStartInfo();
+                        startInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
+                        if (getIs64BitOS())
+                        {
+                            startInfo.FileName = "pnputil.exe";                        
+                        }
+                        else
+                        {
+                            startInfo.FileName = "pnputil.exe";                        
+                        }
+                        startInfo.Arguments = action + " " + deviceID;
+                        startInfo.Verb = "runas";
+                        process.StartInfo = startInfo;
+                        process.Start();
+                    }
+                    else
+                    {
+                        MessageBox.Show("Please select a device first.");
+                        return;
+                    }
+                }
+                catch (Exception exp)
+                {
+                    MessageBox.Show("Exception: " + exp.Message);
+                }
             }
+            
         }
 
         // BUTTON: DISABLE USB
