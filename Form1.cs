@@ -204,17 +204,12 @@ namespace goblinRevolver
 
         // USB HANDLING
         private void handleUSBDevice(string action)
-        {
-            /*if (lvwDevices.SelectedItems.Count == 0)
-            {                
-                return;
-            }*/
-                    
-
-            if (action == "/scan-devices")
+        {           
+            try
             {
-                try
-                {                                  
+                if (lvwDevices.SelectedItems.Count == 1)
+                {
+                    string deviceID = lvwDevices.SelectedItems[0].SubItems[1].Text;
                     System.Diagnostics.Process process = new System.Diagnostics.Process();
                     System.Diagnostics.ProcessStartInfo startInfo = new System.Diagnostics.ProcessStartInfo();
                     startInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
@@ -226,75 +221,96 @@ namespace goblinRevolver
                     {
                         startInfo.FileName = "pnputil.exe";                        
                     }
-                    startInfo.Arguments = action;
+                    startInfo.Arguments = action + " " + deviceID;
                     startInfo.Verb = "runas";
                     process.StartInfo = startInfo;
-                    process.Start();                 
+                    process.Start();
                 }
-                catch (Exception exp)
+                else
                 {
-                    MessageBox.Show("Exception: " + exp.Message);
+                    MessageBox.Show("Please select a device first.");
+                    return;
                 }
             }
-            else
+            catch (Exception exp)
             {
-                try
+                MessageBox.Show("Exception: " + exp.Message);
+            }                       
+        }
+
+        // RESCAN
+        private void findRemovedUSBDevices()
+        {
+            try
+            {                                  
+                System.Diagnostics.Process process = new System.Diagnostics.Process();
+                System.Diagnostics.ProcessStartInfo startInfo = new System.Diagnostics.ProcessStartInfo();
+                startInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
+                if (getIs64BitOS())
                 {
-                    if (lvwDevices.SelectedItems.Count == 1)
-                    {
-                        string deviceID = lvwDevices.SelectedItems[0].SubItems[1].Text;
-                        System.Diagnostics.Process process = new System.Diagnostics.Process();
-                        System.Diagnostics.ProcessStartInfo startInfo = new System.Diagnostics.ProcessStartInfo();
-                        startInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
-                        if (getIs64BitOS())
-                        {
-                            startInfo.FileName = "pnputil.exe";                        
-                        }
-                        else
-                        {
-                            startInfo.FileName = "pnputil.exe";                        
-                        }
-                        startInfo.Arguments = action + " " + deviceID;
-                        startInfo.Verb = "runas";
-                        process.StartInfo = startInfo;
-                        process.Start();
-                    }
-                    else
-                    {
-                        MessageBox.Show("Please select a device first.");
-                        return;
-                    }
+                    startInfo.FileName = "devcon64.exe";                        
                 }
-                catch (Exception exp)
+                else
                 {
-                    MessageBox.Show("Exception: " + exp.Message);
+                    startInfo.FileName = "devcon.exe";                        
                 }
+                startInfo.Arguments = "/rescan";
+                startInfo.Verb = "runas";
+                process.StartInfo = startInfo;
+                process.Start();                 
             }
-            
+            catch (Exception exp)
+            {
+                MessageBox.Show("Exception: " + exp.Message);
+            }
+
+            updateUSBWithDelay();
         }
 
         // BUTTON: DISABLE USB
         private void btn_disableUSB(object sender, EventArgs e)
         {
             handleUSBDevice("/disable-device");
+            
+            updateUSBWithDelay();
         }
 
         // BUTTON: ENABLE USB
         private void btn_enableUSB(object sender, EventArgs e)
         {
             handleUSBDevice("/enable-device");
+
+            updateUSBWithDelay();
         }
         
         // BUTTON: REMOVE USB
         private void btn_removeUSB(object sender, EventArgs e)
         {
             handleUSBDevice("/remove-device");
+
+            updateUSBWithDelay();
+        }
+
+        // UPDATE USB DEVICES WITH DELAY AFTER ACTION
+        private void updateUSBWithDelay()
+        {
+            System.Threading.Thread.Sleep(3000);
+            try
+            {
+                update_USBDevicesTable();
+            }
+            catch (Exception exp)
+            {
+                MessageBox.Show("Exception: " + exp.Message);
+            }
         }
 
         // BUTTON: SCAN USB
         private void btn_scan(object sender, EventArgs e)
         {
-            handleUSBDevice("/scan-devices");
+            findRemovedUSBDevices();
+
+            
         }
 
         // BUTTON: REFRESH USB DEVICES
