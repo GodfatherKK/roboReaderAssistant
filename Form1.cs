@@ -4,8 +4,13 @@ using System.Management;
 using System.Windows.Forms;
 using System.IO;
 using System.Threading.Tasks;
-
-
+using System;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
+using System.Runtime.InteropServices.ComTypes;
+using System.Windows; // for WPF support
+using System.Windows.Interop;
+using MessageBox = System.Windows.Forms.MessageBox;
 
 namespace goblinRevolver
 {
@@ -35,27 +40,12 @@ namespace goblinRevolver
         // ONLOAD HOOK
         private void Form1_Load(object sender, EventArgs e)
             {
-            
-               
 
-                
-                // Example #2
-                // Read each line of the config file
-                string[] config_lines = System.IO.File.ReadAllLines("config.conf");
 
-                if (config_lines[0] == "[config-file]")
-                {
-                    path_Instructions = config_lines[1].Split('=')[1];
-                    path_SolMeds = config_lines[2].Split('=')[1];
-                    path_PremMeds = config_lines[3].Split('=')[1];
-                    path_Diagnostic = config_lines[4].Split('=')[1];
-                }
 
-                Console.WriteLine("path_Instructions: " + path_Instructions);
-                Console.WriteLine("path_SolMeds: " + path_SolMeds);
-                Console.WriteLine("path_PremMeds: " + path_PremMeds);
-                Console.WriteLine("path_Diagnostic: " + path_Diagnostic);
 
+
+                readFileAndUpdatePath();
 
 
                 comboBox1.SelectedIndex = 0;
@@ -101,12 +91,109 @@ namespace goblinRevolver
 
         }
 
-        private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
+        static void lineChanger(string newText, string fileName, int line_to_edit)
         {
-            ComboBox comboBox = (ComboBox)sender;
+            string[] arrLine = File.ReadAllLines(fileName);
+            arrLine[line_to_edit - 1] = newText;
+            File.WriteAllLines(fileName, arrLine);
+        }
 
-            int index = comboBox.SelectedIndex;
+        private void button1_Click(object sender, EventArgs e)
+        {
+            using (var fbd = new FolderBrowserDialog())
+            {
+                DialogResult result = fbd.ShowDialog();
 
+                if (result == DialogResult.OK && !string.IsNullOrWhiteSpace(fbd.SelectedPath))
+                {
+                    //string[] files = Directory.GetFiles(fbd.SelectedPath);
+
+                    //System.Windows.Forms.MessageBox.Show("Files found: " + files.Length.ToString(), "Message");
+
+                    Console.WriteLine(fbd.SelectedPath);
+                    
+                    int index = comboBox1.SelectedIndex;
+
+                    switch (index)
+                    {
+                        case 0:                            
+                            lineChanger("Instructions=" + fbd.SelectedPath, "config.conf", 2);                            
+                            break;
+
+                        case 1:
+                            lineChanger("SolMeds=" + fbd.SelectedPath, "config.conf", 3);                            
+                            break;
+
+                        case 2:
+                            lineChanger("PremMeds=" + fbd.SelectedPath, "config.conf", 4);                            
+                            break;
+
+                        case 3:
+                            lineChanger("Diagnostic=" + fbd.SelectedPath, "config.conf", 5);                            
+                            break;
+
+                        default:
+                            break;
+                    }
+
+                    readFileAndUpdatePath();
+
+
+
+                }
+            }
+        }
+
+        private void readFileAndUpdatePath ()
+        {
+            // Example #2
+            // Read each line of the config file
+            string[] config_lines = System.IO.File.ReadAllLines("config.conf");
+
+            if (config_lines[0] == "[config-file]")
+            {
+                path_Instructions = config_lines[1].Split('=')[1];
+                path_SolMeds = config_lines[2].Split('=')[1];
+                path_PremMeds = config_lines[3].Split('=')[1];
+                path_Diagnostic = config_lines[4].Split('=')[1];
+            }
+
+            Console.WriteLine("path_Instructions: " + path_Instructions);
+            Console.WriteLine("path_SolMeds: " + path_SolMeds);
+            Console.WriteLine("path_PremMeds: " + path_PremMeds);
+            Console.WriteLine("path_Diagnostic: " + path_Diagnostic);
+
+
+            int index = comboBox1.SelectedIndex;
+
+            switch (index)
+            {
+                case 0:
+                    textBox1.Text = path_Instructions;
+                    break;
+
+                case 1:
+                    textBox1.Text = path_SolMeds;
+                    break;
+
+                case 2:
+                    textBox1.Text = path_PremMeds;
+                    break;
+
+                case 3:
+                    textBox1.Text = path_Diagnostic;
+                    break;
+
+                default:
+                    break;
+            }
+        }
+
+
+        private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
+        {            
+
+            int index = comboBox1.SelectedIndex;
 
             switch (index)
             {
@@ -250,6 +337,8 @@ namespace goblinRevolver
 
             return null;
         }
+
+
 
         // TYPE: USBDeviceInfo
         class USBDeviceInfo
@@ -492,11 +581,7 @@ namespace goblinRevolver
             return "";
         }
 
-        private void button1_Click(object sender, EventArgs e)
-        {
-           
-        }
-
+      
       
 
 
