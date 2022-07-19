@@ -1,0 +1,27 @@
+{
+	"autostart": false,
+	
+  "drive": [
+    {
+      "src": "D:",
+      "media": "D:\\"
+    },
+    {
+      "src": "E:",
+      "media": "E:\\"
+    },
+    {
+      "src": "G:",
+      "media": "G:\\"
+    }
+  ],
+  "robot": {
+    "com": "COM1",
+    "placeInTime":  30
+  },
+  "copy": {
+    "src": "F:/dmci_robodata/",
+    "tmp": "temp",
+    "copied":  "imp"
+  }
+}

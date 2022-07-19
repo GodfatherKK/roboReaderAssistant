@@ -32,6 +32,11 @@ namespace goblinRevolver
         // ONLOAD HOOK
         private void Form1_Load(object sender, EventArgs e)
             {
+            
+                comboBox1.SelectedIndex = 0;
+
+
+            /*
                 try
                 {
                     lvwDevices.View = View.Details;
@@ -66,9 +71,9 @@ namespace goblinRevolver
                 {
                     MessageBox.Show("Exception: " + exp.Message);
                 }
+            */
 
-        
-            }
+        }
 
         // ########################################################################################################
 
@@ -86,6 +91,7 @@ namespace goblinRevolver
         // UPDATE USB DEVICES TABLE
         private void update_USBDevicesTable()
         {
+            /*
             try
             {
                 lvwDevices.Items.Clear();
@@ -110,6 +116,7 @@ namespace goblinRevolver
             {
                 MessageBox.Show("Exception: " + exp.Message);
             }
+            */
 
         }
 
@@ -204,7 +211,8 @@ namespace goblinRevolver
 
         // USB HANDLING
         private void handleUSBDevice(string action)
-        {           
+        {   
+            /*
             try
             {
                 if (lvwDevices.SelectedItems.Count == 1)
@@ -235,7 +243,8 @@ namespace goblinRevolver
             catch (Exception exp)
             {
                 MessageBox.Show("Exception: " + exp.Message);
-            }                       
+            }  
+            */
         }
 
         // RESCAN
@@ -427,7 +436,14 @@ namespace goblinRevolver
             return "";
         }
 
-     
+        private void button1_Click(object sender, EventArgs e)
+        {
+           
+        }
+
+
+
+
 
 
 
