@@ -14,7 +14,10 @@ namespace goblinRevolver
 
     public partial class Form1 : Form
     {
-        string targetDeviceID = "";
+        string path_Instructions = "";
+        string path_SolMeds = "";
+        string path_PremMeds = "";
+        string path_Diagnostic = "";
 
         // ######### INIT #########################################################################################
 
@@ -33,7 +36,30 @@ namespace goblinRevolver
         private void Form1_Load(object sender, EventArgs e)
             {
             
+               
+
+                
+                // Example #2
+                // Read each line of the config file
+                string[] config_lines = System.IO.File.ReadAllLines("config.conf");
+
+                if (config_lines[0] == "[config-file]")
+                {
+                    path_Instructions = config_lines[1].Split('=')[1];
+                    path_SolMeds = config_lines[2].Split('=')[1];
+                    path_PremMeds = config_lines[3].Split('=')[1];
+                    path_Diagnostic = config_lines[4].Split('=')[1];
+                }
+
+                Console.WriteLine("path_Instructions: " + path_Instructions);
+                Console.WriteLine("path_SolMeds: " + path_SolMeds);
+                Console.WriteLine("path_PremMeds: " + path_PremMeds);
+                Console.WriteLine("path_Diagnostic: " + path_Diagnostic);
+
+
+
                 comboBox1.SelectedIndex = 0;
+                textBox1.Text = path_Instructions;
 
 
             /*
@@ -73,6 +99,36 @@ namespace goblinRevolver
                 }
             */
 
+        }
+
+        private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            ComboBox comboBox = (ComboBox)sender;
+
+            int index = comboBox.SelectedIndex;
+
+
+            switch (index)
+            {
+                case 0:
+                    textBox1.Text = path_Instructions;
+                    break;
+
+                case 1:
+                    textBox1.Text = path_SolMeds;
+                    break;
+
+                case 2:
+                    textBox1.Text = path_PremMeds;
+                    break;
+
+                case 3:
+                    textBox1.Text = path_Diagnostic;
+                    break;
+
+                default:                    
+                    break;
+            }
         }
 
         // ########################################################################################################
@@ -440,6 +496,8 @@ namespace goblinRevolver
         {
            
         }
+
+      
 
 
 
