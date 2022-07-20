@@ -91,6 +91,32 @@ namespace goblinRevolver
 
         }
 
+        private void button2_Click(object sender, EventArgs e)
+        {
+
+            runWithCMD("test");
+        
+
+
+            }
+
+        private void runWithCMD(string fileName)
+        {
+            try
+            {
+                string exeLocation = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
+                System.Diagnostics.Process.Start(exeLocation + "\\" + fileName + ".bat");
+
+            }
+            catch (Exception exp)
+            {
+                MessageBox.Show("Exception: " + exp.Message);
+            }
+
+            updateUSBWithDelay();
+        }
+
+
         static void lineChanger(string newText, string fileName, int line_to_edit)
         {
             string[] arrLine = File.ReadAllLines(fileName);
@@ -581,8 +607,10 @@ namespace goblinRevolver
             return "";
         }
 
-      
-      
+       
+
+
+
 
 
 
