@@ -1,15 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Management;
 using System.Windows.Forms;
 using System.IO;
 using MessageBox = System.Windows.Forms.MessageBox;
 
 
-namespace goblinRevolver
-{
-    
-
+namespace roboReaderAssistant
+{    
 
     public partial class Form1 : Form
     {

@@ -1,4 +1,4 @@
-﻿namespace goblinRevolver
+﻿namespace roboReaderAssistant
 {
     partial class Form1
     {
@@ -139,6 +139,7 @@
             this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.groupBox1);
             this.Margin = new System.Windows.Forms.Padding(4);
+            this.MinimumSize = new System.Drawing.Size(1341, 300);
             this.Name = "Form1";
             this.Text = "RoboReaderAssistant";
             this.Load += new System.EventHandler(this.Form1_Load);
