@@ -32,12 +32,32 @@ namespace roboReaderAssistant
         // APPLY SETTINGS
         private void applySettingsButton(object sender, EventArgs e)
         {
+            try
+            {
+                runBatFile("Roboend");
+                System.Threading.Thread.Sleep(3000);
 
-            runBatFile("Roboend");
 
-            updateJSONFile();
+                updateJSONFile();
+                System.Threading.Thread.Sleep(3000);
 
-            runBatFile("Roborun");
+                runBatFile("Roborun");
+
+                var result = MessageBox.Show("Changes have been applied.", "Success",
+                                 MessageBoxButtons.OK,
+                                 MessageBoxIcon.Information);
+            }
+
+            catch (Exception exp)
+            {
+                var result = MessageBox.Show("An error has occured: " + exp.Message, "Error",
+                                 MessageBoxButtons.OK,
+                                 MessageBoxIcon.Error);
+            }
+         
+
+
+
         }
 
         // SELECT FOLDER
@@ -90,13 +110,16 @@ namespace roboReaderAssistant
         // ONLOAD HOOK
         private void Form1_Load(object sender, EventArgs e)
         {
-                readFileAndUpdatePath();
+                if (checkIfConfigFilesExist() == 0)
+                {
+                    readFileAndUpdatePath();
 
-                comboBox1.SelectedIndex = 0;
+                    comboBox1.SelectedIndex = 0;
 
-                textBox1.Text = path_Instructions;
+                    textBox1.Text = path_Instructions;
 
-                textBox1.ReadOnly = true;
+                    textBox1.ReadOnly = true;
+                 }                
         }
 
         // COMBOBOX SELECTED INDEX CHANGED
@@ -133,6 +156,67 @@ namespace roboReaderAssistant
 
 
         // ######### HELPER FUNCTIONS #############################################################################
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            checkIfConfigFilesExist();
+        }
+
+
+        // CHECK IF ALL 4 CONFIG/BAT FILES EXIST
+        private int checkIfConfigFilesExist()
+        {
+            string exeLocation = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
+
+            // ROBORUN.BAT
+            string roboRunFile = exeLocation + "\\Roborun.bat";            
+            bool roboRun = File.Exists(roboRunFile);
+            if (!roboRun)
+            {
+                var result = MessageBox.Show("An error has occured. Roborun.bat file missing in roboReaderAssistant.exe's directory (" + exeLocation + ").", "Error",
+                                 MessageBoxButtons.OK,
+                                 MessageBoxIcon.Error);
+                return 1;
+            }
+
+            // ROBOEND.BAT
+            string roboEndFile = exeLocation + "\\Roboend.bat";
+            bool roboEnd = File.Exists(roboEndFile);
+            if (!roboEnd)
+            {
+                var result = MessageBox.Show("An error has occured. Roboend.bat file missing in roboReaderAssistant.exe's directory (" + exeLocation + ").", "Error",
+                                 MessageBoxButtons.OK,
+                                 MessageBoxIcon.Error);
+                return 2;
+            }
+
+            // CONFIG.CONF
+            string configConfFile = exeLocation + "\\config.conf";
+            bool configConf = File.Exists(configConfFile);
+            if (!configConf)
+            {
+                var result = MessageBox.Show("An error has occured. config.conf file missing in roboReaderAssistant.exe's directory (" + exeLocation + ").", "Error",
+                                 MessageBoxButtons.OK,
+                                 MessageBoxIcon.Error);
+                return 3;
+            }
+
+
+            // SETTINGS.JSON
+            string settingJSON = "C:\\Robo\\config\\setting.json";
+            bool settingJSONBool = File.Exists(settingJSON);
+            if (!settingJSONBool)
+            {
+                var result = MessageBox.Show("An error has occured. setting.json is missing in C:\\Robo\\config directory.", "Error",
+                                 MessageBoxButtons.OK,
+                                 MessageBoxIcon.Error);
+                return 4;
+            }
+
+
+            return 0;
+        }
+
 
         // GET LINE (STRING) OF SRC SETTING IN SETTING.JSON
         private string getLineOfSettingsJSONSource()
@@ -213,7 +297,6 @@ namespace roboReaderAssistant
 
             if (lineToModify != "99999")
             {
-                Console.WriteLine(lineToModify);
 
                 string[] splitLine = lineToModify.Split(':');
 
@@ -221,9 +304,7 @@ namespace roboReaderAssistant
 
                 string secondPart = " " + "\"" + textBox1.Text.Replace('\\', '/') + "\"";
 
-                string newString = firstPart + ":" + secondPart;
-
-                Console.WriteLine(newString);
+                string newString = firstPart + ":" + secondPart;                
 
                 int lineNumber = getLineNumberOfSettingsJSONSource();
 
@@ -302,7 +383,9 @@ namespace roboReaderAssistant
             }
         }
 
-        
+    
+
+
 
         // ########################################################################################################
 
