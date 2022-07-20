@@ -89,56 +89,14 @@ namespace roboReaderAssistant
 
         // ONLOAD HOOK
         private void Form1_Load(object sender, EventArgs e)
-            {
-
-
-
-
-
+        {
                 readFileAndUpdatePath();
 
-
                 comboBox1.SelectedIndex = 0;
+
                 textBox1.Text = path_Instructions;
 
-
-            /*
-                try
-                {
-                    lvwDevices.View = View.Details;
-                    lvwDevices.GridLines = true;
-                    lvwDevices.FullRowSelect = true;
-
-                    lvwDevices.Columns.Add("DeviceID", 390);
-                    lvwDevices.Columns.Add("PNPDeviceID", 390);
-                    lvwDevices.Columns.Add("Description", 350);
-                }
-                catch (Exception exp)
-                {
-                    MessageBox.Show("Exception: " + exp.Message);
-                }
-
-
-                try
-                {
-                    OS_bit.Text = getIs64BitOSText();
-                }
-                catch (Exception exp)
-                {
-                    MessageBox.Show("Exception: " + exp.Message);
-                }
-
-
-                try
-                {
-                    update_USBDevicesTable();
-                }
-                catch (Exception exp)
-                {
-                    MessageBox.Show("Exception: " + exp.Message);
-                }
-            */
-
+                textBox1.ReadOnly = true;
         }
 
         // COMBOBOX SELECTED INDEX CHANGED
@@ -307,9 +265,8 @@ namespace roboReaderAssistant
 
         // READ CONFIG.CONF (IN SAME DIRECTORY AS ROBOREADERASSISTANT EXE)
         private void readFileAndUpdatePath ()
-        {
-            // Example #2
-            // Read each line of the config file
+        {            
+            // READ EACH LINE OF CONFIG.CONF FILE
             string[] config_lines = System.IO.File.ReadAllLines("config.conf");
 
             if (config_lines[0] == "[config-file]")
@@ -319,14 +276,6 @@ namespace roboReaderAssistant
                 path_PremMeds = config_lines[3].Split('=')[1];
                 path_Diagnostic = config_lines[4].Split('=')[1];
             }
-
-            /*
-            Console.WriteLine("path_Instructions: " + path_Instructions);
-            Console.WriteLine("path_SolMeds: " + path_SolMeds);
-            Console.WriteLine("path_PremMeds: " + path_PremMeds);
-            Console.WriteLine("path_Diagnostic: " + path_Diagnostic);
-            */
-
 
             int index = comboBox1.SelectedIndex;
 
