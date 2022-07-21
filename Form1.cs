@@ -3,7 +3,10 @@ using System.Collections.Generic;
 using System.Windows.Forms;
 using System.IO;
 using MessageBox = System.Windows.Forms.MessageBox;
-
+using Dicom;
+using Dicom.Media;
+using Dicom.Serialization;
+using System.Xml;
 
 namespace roboReaderAssistant
 {    
@@ -98,6 +101,149 @@ namespace roboReaderAssistant
 
                 }
             }
+        }
+
+
+        private string getValueFromTag(DicomTag tag, DicomDataset dataset)
+        {            
+            return dataset.GetSingleValue<string>(tag);
+        }
+
+
+        public static void DumpSingleDicomTag(string dicomFile, string tagNumber)
+        {
+            var dataset = DicomFile.Open(dicomFile).Dataset;
+            var tag = Dicom.DicomTag.Parse(tagNumber);
+            var result = dataset.GetString(tag);
+            Console.WriteLine(result);
+        }
+
+
+
+
+
+        private void button4_Click(object sender, EventArgs e)
+        {
+            //ReadFile("C:\\0002.DCM");
+
+            DicomFile file = DicomFile.Open(@"C:\dicomfileOrdner\DICOMDIR");
+
+            DicomDataset dataset = file.Dataset;
+
+            //dataset.WriteToXml();
+
+            //file.Dataset.GetDicomItem<T>(DicomTag.PatientID);
+            string xmlText = DicomXML.WriteToXml(dataset);
+
+            //DumpSingleDicomTag(@"C:\dicomfileOrdner\DICOMDIR", "0010,0010");
+
+            var a = 324;
+            //Console.WriteLine(file.Dataset.Get<string>(DicomTag.PatientID));
+
+            //dataset.AddOrUpdate(DicomTag.PatientName, "DOE^JOHN");
+
+            XmlDocument doc = new XmlDocument();
+            doc.LoadXml(xmlText);
+            //doc.Save("test.xml");
+
+            var b = 200;
+
+            Console.WriteLine("Patient Level Information:");
+            //Console.WriteLine(getValueFromTag(DicomTag.PatientName, dataset));
+
+            var c = 200;
+
+
+
+
+
+        
+
+
+
+
+
+
+            /*
+            var dicomDirectory = DicomDirectory.Open("C:\\dicomfileOrdner\\DICOMDIR");
+            foreach (var patientRecord in dicomDirectory.RootDirectoryRecordCollection)
+            {
+                var a = 100;
+
+                foreach (var studyRecord in patientRecord.LowerLevelDirectoryRecordCollection)
+                {
+                    foreach (var seriesRecord in studyRecord.LowerLevelDirectoryRecordCollection)
+                    {
+                        foreach (var imageRecord in seriesRecord.LowerLevelDirectoryRecordCollection)
+                        {
+                            //this is the problematic line
+                            //var dicomDataset = imageRecord.GetValue<DicomSequence>(DicomTag.IconImageSequence, 0).Items.First();
+                            //more stuff
+                        }
+                    }
+                }
+            }
+            */
+
+            //var patientid = file.Dataset.GetString(DicomTag.PatientID);
+
+            //var patientName = DicomTag.Parse("0010,0010");
+            //string value = file.Dataset.GetString(patientName);
+
+
+
+        }
+
+
+
+        // READ DICOM FILE (not working)
+        public void ReadFile(string filename)
+        {
+            using (FileStream fs = File.OpenRead(filename))
+            {
+                fs.Seek(128, SeekOrigin.Begin);
+                if ((fs.ReadByte() != (byte)'D' ||
+                     fs.ReadByte() != (byte)'I' ||
+                     fs.ReadByte() != (byte)'C' ||
+                     fs.ReadByte() != (byte)'M'))
+                {
+                    Console.WriteLine("Not a DCM");
+                    return;
+                }
+                BinaryReader reader = new BinaryReader(fs);
+
+                ushort g;
+                ushort e;
+                do
+                {
+                    g = reader.ReadUInt16();
+                    e = reader.ReadUInt16();
+
+                    string vr = new string(reader.ReadChars(2));
+                    long length;
+                    if (vr.Equals("AE") || vr.Equals("AS") || vr.Equals("AT")
+                        || vr.Equals("CS") || vr.Equals("DA") || vr.Equals("DS")
+                        || vr.Equals("DT") || vr.Equals("FL") || vr.Equals("FD")
+                        || vr.Equals("IS") || vr.Equals("LO") || vr.Equals("PN")
+                        || vr.Equals("SH") || vr.Equals("SL") || vr.Equals("SS")
+                        || vr.Equals("ST") || vr.Equals("TM") || vr.Equals("UI")
+                        || vr.Equals("UL") || vr.Equals("US"))
+                        length = reader.ReadUInt16();
+                    else
+                    {
+                        // Read the reserved byte
+                        reader.ReadUInt16();
+                        length = reader.ReadUInt32();
+                    }
+
+                    byte[] val = reader.ReadBytes((int)length);
+
+                } while (g == 2);
+
+                fs.Close();
+            }
+
+            return;
         }
 
         // ########################################################################################################
@@ -383,7 +529,9 @@ namespace roboReaderAssistant
             }
         }
 
-    
+       
+
+
 
 
 
