@@ -31,10 +31,51 @@ namespace roboReaderAssistant
         }
 
         // ########################################################################################################
+      
+
+
+        public string concatenateAllSubNodeValues(XmlNode node)
+        {
+            string returnString = "";
+
+            List<string> innerValues = new List<string>();
+
+            if (node.ChildNodes.Count > 0)
+            {
+                foreach (XmlNode child in node.ChildNodes)
+                {
+                    if (child.ChildNodes.Count > 0)
+                    {
+                        foreach (XmlNode childChild in child.ChildNodes)
+                        {
+                            if (childChild.InnerXml.Length > 0)
+                            {
+                                innerValues.Add(childChild.InnerText);
+                            }
+                        }
+                    }
+                }
+            }
+
+            for(int i = 0; i < innerValues.Count; i++)
+            {
+                    returnString = returnString + innerValues[i];
+                    if (i != innerValues.Count - 1)
+                    {
+                        returnString = returnString + "_";
+                    }
+
+            }
+
+
+            return returnString;
+        }
+
 
         public List<DicomEntry> createDicomEntry(XmlNodeList nodeList)
         {
             List<DicomEntry> entries = new List<DicomEntry>();
+            
 
             foreach (XmlNode node in nodeList)
             {
@@ -61,9 +102,18 @@ namespace roboReaderAssistant
                         {
                             entries.Add(diconItemEntry);
                         }
-                            
 
-                        var test = 200;
+                    }
+                    if (subNode.LocalName != "Value" && subNode.LocalName != "Item")
+                    {
+                        string concatValue = concatenateAllSubNodeValues(subNode);
+                        valueList.Add(concatValue);
+
+
+                        var a = 1000;
+
+
+                        var b = 2000;
                     }
                 }
 
@@ -100,6 +150,8 @@ namespace roboReaderAssistant
                     }                    
                 }
 
+                // TRACK ALL RENAMED FOLDERS
+                List<string> renamedFolderNames = new List<string>();
 
                 foreach (string folderName in folderNames)
                 {
@@ -115,10 +167,75 @@ namespace roboReaderAssistant
                         {
                             if (entry.dicomKeyword == comboBox2.Text)
                             {
-                                Console.WriteLine("Value found for: " + entry.dicomKeyword);
-                                var result = MessageBox.Show(entry.dicomValueList[0], "Error",
-                                         MessageBoxButtons.OK,
-                                         MessageBoxIcon.Error);
+                                //Console.WriteLine("Value found for: " + entry.dicomKeyword);
+                                //var result = MessageBox.Show(entry.dicomValueList[0], "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                                string value = "";
+
+                                for(int i = 0; i < entry.dicomValueList.Count; i++)
+                                {
+                                    value = value + entry.dicomValueList[i];
+
+                                    if (i != entry.dicomValueList.Count - 1)
+                                    {
+                                        value = value + "_";
+                                    }
+                                }
+
+                                Console.WriteLine("value: " + value);
+                                Console.WriteLine("folderName: " + folderName);
+                                Console.WriteLine("newFolderName: " + value);
+
+                                string[] destinationFolderSplit = folderName.Split(new string[] { "\\" }, StringSplitOptions.None);
+                                string destinationFolderName = "";
+
+                                for(int i = 0;i < destinationFolderSplit.Length - 1 ; i++)
+                                {
+                                    if (i == 0)
+                                    {
+                                        destinationFolderName = destinationFolderName + destinationFolderSplit[i];
+                                    }
+                                    else
+                                    {
+                                        destinationFolderName = destinationFolderName + "\\" + destinationFolderSplit[i];
+                                    }
+                                    
+                                }
+                                destinationFolderName = destinationFolderName + "\\" + value;
+
+                                try
+                                {
+                                    if (!renamedFolderNames.Contains(value))
+                                    {
+                                        renamedFolderNames.Add(value);
+                                        Directory.Move(folderName, destinationFolderName);
+                                    }
+                                    else
+                                    {
+                                        for(int i = 0; i < 1000; i++)
+                                        {
+                                            string countedValue = value + "_" + i;
+                                            if (!renamedFolderNames.Contains(countedValue))
+                                            {
+                                                renamedFolderNames.Add(countedValue);
+                                                Directory.Move(folderName, destinationFolderName + "_" + i);
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    
+                                }
+                                catch (Exception ex)
+                                {
+                                    MessageBox.Show("An error has occured: " + ex.Message, "Error",
+                                                                     MessageBoxButtons.OK,
+                                                                     MessageBoxIcon.Error);
+                                }
+                                
+
+                            
+
+                                break;
                             }
                         }
                     }
@@ -130,11 +247,21 @@ namespace roboReaderAssistant
                     }
                 }
 
+                if (renamedFolderNames.Count > 0)
+                {
+                    var result = MessageBox.Show("Folders have been renamed.", "Success",
+                             MessageBoxButtons.OK,
+                             MessageBoxIcon.Information);
+                }
+                if (renamedFolderNames.Count == 0)
+                {
+                    var result = MessageBox.Show("No Imp* Folders found.", "Information",
+                             MessageBoxButtons.OK,
+                             MessageBoxIcon.Information);
+                }
 
-                               
             }            
         }
-
 
 
         public List<DicomEntry> readDicomFile(string folderPath)
@@ -303,8 +430,8 @@ namespace roboReaderAssistant
             return;
         }
 
-        // ##############################################################
-        // ##########################################
+        // ########################################################################################################
+        
 
         public SortedDictionary<string, string> createSortedDictionary ()
         {
@@ -377,8 +504,7 @@ namespace roboReaderAssistant
                     textBox1.ReadOnly = true;
 
                     comboBox2.SelectedIndex = 0;
-
-                    var awdawda = 2323;
+                    
                  }                
         }
 
@@ -568,9 +694,9 @@ namespace roboReaderAssistant
 
                 string firstPart = splitLine[0];
 
-                string secondPart = " " + "\"" + textBox1.Text.Replace('\\', '/') + "\"";
+                string secondPart = " " + "\"" + textBox1.Text.Replace('\\', '/') + "/" + "\"" ;
 
-                string newString = firstPart + ":" + secondPart;                
+                string newString = firstPart + ":" + secondPart + ",";
 
                 int lineNumber = getLineNumberOfSettingsJSONSource();
 

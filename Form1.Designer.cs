@@ -145,7 +145,7 @@
             this.button4.Name = "button4";
             this.button4.Size = new System.Drawing.Size(179, 30);
             this.button4.TabIndex = 5;
-            this.button4.Text = "Browse for DICOM File";
+            this.button4.Text = "Rename All Folders";
             this.button4.UseVisualStyleBackColor = true;
             this.button4.Click += new System.EventHandler(this.renameAllFolders);
             // 
@@ -161,7 +161,7 @@
             this.groupBox3.Size = new System.Drawing.Size(550, 148);
             this.groupBox3.TabIndex = 6;
             this.groupBox3.TabStop = false;
-            this.groupBox3.Text = "Rename Subolders";
+            this.groupBox3.Text = "Rename All Imp* Subfolders ";
             // 
             // label5
             // 
