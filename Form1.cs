@@ -7,9 +7,14 @@ using Dicom;
 using Dicom.Media;
 using Dicom.Serialization;
 using System.Xml;
+using System.Linq;
 
 namespace roboReaderAssistant
-{    
+{
+
+
+
+
 
     public partial class Form1 : Form
     {
@@ -27,8 +32,146 @@ namespace roboReaderAssistant
 
         // ########################################################################################################
 
+        public List<DicomEntry> createDicomEntry(XmlNodeList nodeList)
+        {
+            List<DicomEntry> entries = new List<DicomEntry>();
+
+            foreach (XmlNode node in nodeList)
+            {
+                
+                List<string> valueList = new List<string>();
+
+                foreach (XmlNode subNode in node.ChildNodes)
+                {
+                    if (subNode.LocalName == "Value")
+                    {
+                        valueList.Add(subNode.InnerXml);
+                    }
+                    if (subNode.LocalName == "Item")
+                    {
+                        
+
+                        valueList.Add(subNode.InnerXml);                        
+
+                        XmlNodeList itemNodeList = subNode.SelectNodes("DicomAttribute");
+
+                        List<DicomEntry> dicomItemEntryList = createDicomEntry(itemNodeList);
+
+                        foreach (DicomEntry diconItemEntry in dicomItemEntryList)
+                        {
+                            entries.Add(diconItemEntry);
+                        }
+                            
+
+                        var test = 200;
+                    }
+                }
+
+                DicomEntry entry = new DicomEntry();
+                entry.dicomTagID = node.Attributes[0].Value;
+                entry.dicomVR = node.Attributes[1].Value;
+                entry.dicomKeyword = node.Attributes[2].Value;
+                entry.dicomValueList = valueList;
+
+                entries.Add(entry);
+            }
+
+            return entries;
+        }
+
+        private void renameAllFolders(object sender, EventArgs e)
+        {
+            if (textBox1.Text != "undefined" && textBox1.Text.Length > 0)
+            {
+
+                // GET ALL DIRECT SUBFOLDERS
+                var directories = Directory.GetDirectories(textBox1.Text);
+
+                List<string> folderNames = new List<string>();
+
+                // FILTER FOR IMP FOLDERS
+                foreach (var directory in directories)
+                {
+                    string resultString = directory.ToString().Split(new string[] { textBox1.Text + "\\"}, StringSplitOptions.None)[1];
+                    
+                    if (resultString.StartsWith("imp"))
+                    {
+                        folderNames.Add(directory.ToString());
+                    }                    
+                }
 
 
+                foreach (string folderName in folderNames)
+                {
+                    string filePath = folderName + "\\DICOMDIR";
+
+                    Console.WriteLine(filePath);
+                    bool fileExists = File.Exists(filePath);
+                    if (fileExists)
+                    {
+                        List<DicomEntry> myList = readDicomFile(filePath);
+
+                        foreach (DicomEntry entry in myList)
+                        {
+                            if (entry.dicomKeyword == comboBox2.Text)
+                            {
+                                Console.WriteLine("Value found for: " + entry.dicomKeyword);
+                                var result = MessageBox.Show(entry.dicomValueList[0], "Error",
+                                         MessageBoxButtons.OK,
+                                         MessageBoxIcon.Error);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        var result = MessageBox.Show("An error has occured. DICOMDIR file missing in directory (" + textBox1.Text + ").", "Error",
+                                         MessageBoxButtons.OK,
+                                         MessageBoxIcon.Error);
+                    }
+                }
+
+
+                               
+            }            
+        }
+
+
+
+        public List<DicomEntry> readDicomFile(string folderPath)
+        {
+
+
+            string currentFolderPath = folderPath;
+
+            //currentFolderPath = "C:\\dicomfileOrdner\\DICOMDIR";
+
+            // OPEN DICOM FILE
+            DicomFile file = DicomFile.Open(currentFolderPath);
+
+            // GET DATASET OF DICOM FILE
+            DicomDataset dataset = file.Dataset;
+
+            // CONVERT TO XML
+            string xmlText = DicomXML.WriteToXml(dataset);
+
+            // READ INTO XML OBJECT "DOC"
+            XmlDocument doc = new XmlDocument();
+            doc.LoadXml(xmlText);
+
+            // CREATE NODE LIST
+            XmlNodeList nodeList;
+
+            // DEFINE ROOT
+            XmlNode root = doc.DocumentElement;
+
+            // DEFINE PARENT NODE LIST
+            nodeList = root.SelectNodes("/NativeDicomModel/DicomAttribute");
+
+            List<DicomEntry> dicomEntryList = createDicomEntry(nodeList);
+
+            return dicomEntryList;
+
+        }
 
         // ######### BUTTONS ######################################################################################
 
@@ -104,95 +247,9 @@ namespace roboReaderAssistant
         }
 
 
-        private string getValueFromTag(DicomTag tag, DicomDataset dataset)
-        {            
-            return dataset.GetSingleValue<string>(tag);
-        }
-
-
-        public static void DumpSingleDicomTag(string dicomFile, string tagNumber)
-        {
-            var dataset = DicomFile.Open(dicomFile).Dataset;
-            var tag = Dicom.DicomTag.Parse(tagNumber);
-            var result = dataset.GetString(tag);
-            Console.WriteLine(result);
-        }
-
-
-
-
-
-        private void button4_Click(object sender, EventArgs e)
-        {
-            //ReadFile("C:\\0002.DCM");
-
-            DicomFile file = DicomFile.Open(@"C:\dicomfileOrdner\DICOMDIR");
-
-            DicomDataset dataset = file.Dataset;
-
-            //dataset.WriteToXml();
-
-            //file.Dataset.GetDicomItem<T>(DicomTag.PatientID);
-            string xmlText = DicomXML.WriteToXml(dataset);
-
-            //DumpSingleDicomTag(@"C:\dicomfileOrdner\DICOMDIR", "0010,0010");
-
-            var a = 324;
-            //Console.WriteLine(file.Dataset.Get<string>(DicomTag.PatientID));
-
-            //dataset.AddOrUpdate(DicomTag.PatientName, "DOE^JOHN");
-
-            XmlDocument doc = new XmlDocument();
-            doc.LoadXml(xmlText);
-            //doc.Save("test.xml");
-
-            var b = 200;
-
-            Console.WriteLine("Patient Level Information:");
-            //Console.WriteLine(getValueFromTag(DicomTag.PatientName, dataset));
-
-            var c = 200;
-
-
-
 
 
         
-
-
-
-
-
-
-            /*
-            var dicomDirectory = DicomDirectory.Open("C:\\dicomfileOrdner\\DICOMDIR");
-            foreach (var patientRecord in dicomDirectory.RootDirectoryRecordCollection)
-            {
-                var a = 100;
-
-                foreach (var studyRecord in patientRecord.LowerLevelDirectoryRecordCollection)
-                {
-                    foreach (var seriesRecord in studyRecord.LowerLevelDirectoryRecordCollection)
-                    {
-                        foreach (var imageRecord in seriesRecord.LowerLevelDirectoryRecordCollection)
-                        {
-                            //this is the problematic line
-                            //var dicomDataset = imageRecord.GetValue<DicomSequence>(DicomTag.IconImageSequence, 0).Items.First();
-                            //more stuff
-                        }
-                    }
-                }
-            }
-            */
-
-            //var patientid = file.Dataset.GetString(DicomTag.PatientID);
-
-            //var patientName = DicomTag.Parse("0010,0010");
-            //string value = file.Dataset.GetString(patientName);
-
-
-
-        }
 
 
 
@@ -246,12 +303,65 @@ namespace roboReaderAssistant
             return;
         }
 
-        // ########################################################################################################
+        // ##############################################################
+        // ##########################################
 
+        public SortedDictionary<string, string> createSortedDictionary ()
+        {
 
+            SortedDictionary<string, string> sortedList = new SortedDictionary<string, string>();
+
+            sortedList.Add("AccessionNumber", "00080050");
+            sortedList.Add("BodyPartExamined", "00180015");
+            sortedList.Add("Columns", "00280011");
+            sortedList.Add("DirectoryRecordSequence", "00041220");
+            sortedList.Add("DirectoryRecordType", "00041430");
+            sortedList.Add("FileSetConsistencyFlag", "00041212");
+            sortedList.Add("FileSetDescriptorFileID", "00041141");
+            sortedList.Add("FileSetID", "00041130");
+            sortedList.Add("ImageType", "00080008");
+            sortedList.Add("InstanceNumber", "00200013");
+            sortedList.Add("InstitutionAddress", "00080081");
+            sortedList.Add("InstitutionName", "00080080");
+            sortedList.Add("Modality", "00080060");
+            sortedList.Add("OffsetOfReferencedLowerLevelDirectoryEntity", "00041420");
+            sortedList.Add("OffsetOfTheFirstDirectoryRecordOfTheRootDirectoryEntity", "00041200");
+            sortedList.Add("OffsetOfTheLastDirectoryRecordOfTheRootDirectoryEntity", "00041202");
+            sortedList.Add("OffsetOfTheNextDirectoryRecord", "00041400");
+            sortedList.Add("PatientBirthDate", "00100030");
+            sortedList.Add("PatientID", "00100020");
+            sortedList.Add("PatientName", "00100010");
+            sortedList.Add("PatientPosition", "00185100");
+            sortedList.Add("PatientSex", "00100040");
+            sortedList.Add("RecordInUseFlag", "00041410");
+            sortedList.Add("ReferencedFileID", "00041500");
+            sortedList.Add("ReferencedImageSequence", "00081140");
+            sortedList.Add("ReferencedSOPClassUID", "00081150");
+            sortedList.Add("ReferencedSOPClassUIDInFile", "00041510");
+            sortedList.Add("ReferencedSOPInstanceUID", "00081155");
+            sortedList.Add("ReferencedSOPInstanceUIDInFile", "00041511");
+            sortedList.Add("ReferencedTransferSyntaxUIDInFile", "00041512");
+            sortedList.Add("Rows", "00280010");
+            sortedList.Add("SeriesDate", "00080021");
+            sortedList.Add("SeriesInstanceUID", "0020000E");
+            sortedList.Add("SeriesNumber", "00200011");
+            sortedList.Add("SeriesTime", "00080031");
+            sortedList.Add("SpecificCharacterSet", "00080005");
+            sortedList.Add("StudyDate", "00080020");
+            sortedList.Add("StudyDescription", "00081030");
+            sortedList.Add("StudyID", "00200010");
+            sortedList.Add("StudyInstanceUID", "0020000D");
+            sortedList.Add("StudyTime", "00080030");
+
+            return sortedList;
+
+        }
 
 
         // ######### EVENTS #######################################################################################
+
+       
+
 
         // ONLOAD HOOK
         private void Form1_Load(object sender, EventArgs e)
@@ -265,6 +375,10 @@ namespace roboReaderAssistant
                     textBox1.Text = path_Instructions;
 
                     textBox1.ReadOnly = true;
+
+                    comboBox2.SelectedIndex = 0;
+
+                    var awdawda = 2323;
                  }                
         }
 
@@ -297,16 +411,23 @@ namespace roboReaderAssistant
             }
         }
 
+        // TAG SELECTION CHANGED
+        private void comboBox2_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            string value = "";
 
+            string key = comboBox2.Text;
 
+            SortedDictionary<string, string> dictionary = createSortedDictionary();
+
+            if (dictionary.TryGetValue(key, out value))
+            {
+                label5.Text = value;
+            }
+        }
 
 
         // ######### HELPER FUNCTIONS #############################################################################
-
-        private void button3_Click(object sender, EventArgs e)
-        {
-            checkIfConfigFilesExist();
-        }
 
 
         // CHECK IF ALL 4 CONFIG/BAT FILES EXIST
@@ -362,7 +483,6 @@ namespace roboReaderAssistant
 
             return 0;
         }
-
 
         // GET LINE (STRING) OF SRC SETTING IN SETTING.JSON
         private string getLineOfSettingsJSONSource()
@@ -529,7 +649,14 @@ namespace roboReaderAssistant
             }
         }
 
-       
+      
+
+
+
+
+
+
+
 
 
 
@@ -545,4 +672,14 @@ namespace roboReaderAssistant
         // ########################################################################################################
 
     }
+
+
+    public class DicomEntry
+    {
+        public string dicomTagID;
+        public string dicomVR;
+        public string dicomKeyword;
+        public List<string> dicomValueList = new List<string>();
+    };
+
 }
