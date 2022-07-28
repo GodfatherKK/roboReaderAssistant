@@ -31,7 +31,60 @@ namespace roboReaderAssistant
         }
 
         // ########################################################################################################
-      
+
+
+        private void resetFolderNamesButton(object sender, EventArgs e)
+        {
+            DialogResult dialogResult = MessageBox.Show("This will reset all folder names in the selected path. Are you sure?", "Folder name reset confirmation", MessageBoxButtons.YesNo);
+            if (dialogResult == DialogResult.Yes)
+            {
+                //do something
+
+                // GET ALL DIRECT SUBFOLDERS
+                var directories = Directory.GetDirectories(textBox1.Text);
+
+                List<string> folderNames = new List<string>();
+
+                int i = 0;
+
+                int renamedFolderCount = 0;
+                // GET ALL FOLDER NAMES
+                foreach (var directory in directories)
+                {
+                    i++;
+
+                    string resultString = directory.ToString().Split(new string[] { textBox1.Text + "\\" }, StringSplitOptions.None)[1];
+
+                    folderNames.Add(resultString);
+
+                    var sourcePath = textBox1.Text + "\\" + resultString;
+                    while(Directory.Exists(textBox1.Text + "\\" + "imp_" + i))
+                        {
+                        i++;
+                    }
+                    var targetPath = textBox1.Text + "\\" + "imp_" + i;
+
+                    if (sourcePath != targetPath)
+                    {
+                        Directory.Move(sourcePath, targetPath);
+                        renamedFolderCount++;
+                    }
+
+                    
+                }
+
+
+                var result = MessageBox.Show(renamedFolderCount + " folder names have been reset.", "Information",
+                                 MessageBoxButtons.OK,
+                                 MessageBoxIcon.Information);
+            }
+            else if (dialogResult == DialogResult.No)
+            {
+                //do something else
+            }
+
+            
+        }
 
 
         public string concatenateAllSubNodeValues(XmlNode node)
@@ -162,81 +215,85 @@ namespace roboReaderAssistant
                     if (fileExists)
                     {
                         List<DicomEntry> myList = readDicomFile(filePath);
+                        bool entryFound = false;
+                        DicomEntry foundEntry = new DicomEntry();
 
                         foreach (DicomEntry entry in myList)
                         {
                             if (entry.dicomKeyword == comboBox2.Text)
                             {
-                                //Console.WriteLine("Value found for: " + entry.dicomKeyword);
-                                //var result = MessageBox.Show(entry.dicomValueList[0], "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                                entryFound = true;
+                                foundEntry = entry;
+                            }
+                        }
 
-                                string value = "";
+                        if (entryFound)
+                        {
+                            //Console.WriteLine("Value found for: " + entry.dicomKeyword);
+                            //var result = MessageBox.Show(entry.dicomValueList[0], "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                                for(int i = 0; i < entry.dicomValueList.Count; i++)
+                            string value = "";
+
+                            for (int i = 0; i < foundEntry.dicomValueList.Count; i++)
+                            {
+                                value = value + foundEntry.dicomValueList[i];
+
+                                if (i != foundEntry.dicomValueList.Count - 1)
                                 {
-                                    value = value + entry.dicomValueList[i];
+                                    value = value + "_";
+                                }
+                            }
 
-                                    if (i != entry.dicomValueList.Count - 1)
-                                    {
-                                        value = value + "_";
-                                    }
+                            Console.WriteLine("value: " + value);
+                            Console.WriteLine("folderName: " + folderName);
+                            Console.WriteLine("newFolderName: " + value);
+
+                            string[] destinationFolderSplit = folderName.Split(new string[] { "\\" }, StringSplitOptions.None);
+                            string destinationFolderName = "";
+
+                            for (int i = 0; i < destinationFolderSplit.Length - 1; i++)
+                            {
+                                if (i == 0)
+                                {
+                                    destinationFolderName = destinationFolderName + destinationFolderSplit[i];
+                                }
+                                else
+                                {
+                                    destinationFolderName = destinationFolderName + "\\" + destinationFolderSplit[i];
                                 }
 
-                                Console.WriteLine("value: " + value);
-                                Console.WriteLine("folderName: " + folderName);
-                                Console.WriteLine("newFolderName: " + value);
+                            }
+                            destinationFolderName = destinationFolderName + "\\" + value;
 
-                                string[] destinationFolderSplit = folderName.Split(new string[] { "\\" }, StringSplitOptions.None);
-                                string destinationFolderName = "";
-
-                                for(int i = 0;i < destinationFolderSplit.Length - 1 ; i++)
+                            try
+                            {
+                                if (!renamedFolderNames.Contains(value))
                                 {
-                                    if (i == 0)
-                                    {
-                                        destinationFolderName = destinationFolderName + destinationFolderSplit[i];
-                                    }
-                                    else
-                                    {
-                                        destinationFolderName = destinationFolderName + "\\" + destinationFolderSplit[i];
-                                    }
-                                    
+                                    renamedFolderNames.Add(value);
+                                    Directory.Move(folderName, destinationFolderName);
                                 }
-                                destinationFolderName = destinationFolderName + "\\" + value;
-
-                                try
+                                else
                                 {
-                                    if (!renamedFolderNames.Contains(value))
+                                    for (int i = 0; i < 1000; i++)
                                     {
-                                        renamedFolderNames.Add(value);
-                                        Directory.Move(folderName, destinationFolderName);
-                                    }
-                                    else
-                                    {
-                                        for(int i = 0; i < 1000; i++)
+                                        string countedValue = value + "_" + i;
+                                        if (!renamedFolderNames.Contains(countedValue))
                                         {
-                                            string countedValue = value + "_" + i;
-                                            if (!renamedFolderNames.Contains(countedValue))
-                                            {
-                                                renamedFolderNames.Add(countedValue);
-                                                Directory.Move(folderName, destinationFolderName + "_" + i);
-                                                break;
-                                            }
+                                            renamedFolderNames.Add(countedValue);
+                                            Directory.Move(folderName, destinationFolderName + "_" + i);
+                                            break;
                                         }
                                     }
-                                    
                                 }
-                                catch (Exception ex)
-                                {
-                                    MessageBox.Show("An error has occured: " + ex.Message, "Error",
-                                                                     MessageBoxButtons.OK,
-                                                                     MessageBoxIcon.Error);
-                                }
-                                
 
-                            
-
-                                break;
                             }
+                            catch (Exception ex)
+                            {
+                                MessageBox.Show("An error has occured: " + ex.Message, "Error",
+                                                                 MessageBoxButtons.OK,
+                                                                 MessageBoxIcon.Error);
+                            }
+
                         }
                     }
                     else
@@ -266,37 +323,40 @@ namespace roboReaderAssistant
 
         public List<DicomEntry> readDicomFile(string folderPath)
         {
+            if (File.Exists(folderPath))
+            {
+                // OPEN DICOM FILE
+                DicomFile file = DicomFile.Open(folderPath);
 
+                // GET DATASET OF DICOM FILE
+                DicomDataset dataset = file.Dataset;
 
-            string currentFolderPath = folderPath;
+                // CONVERT TO XML
+                string xmlText = DicomXML.WriteToXml(dataset);
 
-            //currentFolderPath = "C:\\dicomfileOrdner\\DICOMDIR";
+                // READ INTO XML OBJECT "DOC"
+                XmlDocument doc = new XmlDocument();
+                doc.LoadXml(xmlText);
 
-            // OPEN DICOM FILE
-            DicomFile file = DicomFile.Open(currentFolderPath);
+                // CREATE NODE LIST
+                XmlNodeList nodeList;
 
-            // GET DATASET OF DICOM FILE
-            DicomDataset dataset = file.Dataset;
+                // DEFINE ROOT
+                XmlNode root = doc.DocumentElement;
 
-            // CONVERT TO XML
-            string xmlText = DicomXML.WriteToXml(dataset);
+                // DEFINE PARENT NODE LIST
+                nodeList = root.SelectNodes("/NativeDicomModel/DicomAttribute");
 
-            // READ INTO XML OBJECT "DOC"
-            XmlDocument doc = new XmlDocument();
-            doc.LoadXml(xmlText);
+                List<DicomEntry> dicomEntryList = createDicomEntry(nodeList);
 
-            // CREATE NODE LIST
-            XmlNodeList nodeList;
+                return dicomEntryList;
+            }
+            else
+            {
+                return null;
+            }
 
-            // DEFINE ROOT
-            XmlNode root = doc.DocumentElement;
-
-            // DEFINE PARENT NODE LIST
-            nodeList = root.SelectNodes("/NativeDicomModel/DicomAttribute");
-
-            List<DicomEntry> dicomEntryList = createDicomEntry(nodeList);
-
-            return dicomEntryList;
+            
 
         }
 
@@ -775,7 +835,8 @@ namespace roboReaderAssistant
             }
         }
 
-      
+        
+
 
 
 
