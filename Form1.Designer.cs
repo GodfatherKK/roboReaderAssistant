@@ -161,7 +161,7 @@
             this.button4.TabIndex = 5;
             this.button4.Text = "Rename All Folders";
             this.button4.UseVisualStyleBackColor = true;
-            this.button4.Click += new System.EventHandler(this.renameAllFolders);
+            this.button4.Click += new System.EventHandler(this.renameFoldersButton);
             // 
             // groupBox3
             // 
@@ -268,15 +268,15 @@
             // 
             // progressBar
             // 
-            this.progressBar.Location = new System.Drawing.Point(720, 390);
+            this.progressBar.Location = new System.Drawing.Point(88, 428);
             this.progressBar.Name = "progressBar";
-            this.progressBar.Size = new System.Drawing.Size(361, 23);
+            this.progressBar.Size = new System.Drawing.Size(985, 23);
             this.progressBar.TabIndex = 7;
             // 
             // progressLabel
             // 
             this.progressLabel.AutoSize = true;
-            this.progressLabel.Location = new System.Drawing.Point(650, 393);
+            this.progressLabel.Location = new System.Drawing.Point(9, 431);
             this.progressLabel.Name = "progressLabel";
             this.progressLabel.Size = new System.Drawing.Size(68, 16);
             this.progressLabel.TabIndex = 8;
@@ -286,7 +286,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1093, 426);
+            this.ClientSize = new System.Drawing.Size(1093, 462);
             this.Controls.Add(this.progressLabel);
             this.Controls.Add(this.progressBar);
             this.Controls.Add(this.groupBox3);

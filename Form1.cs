@@ -10,6 +10,7 @@ using System.Xml;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Drawing;
+using System.Threading.Tasks;
 
 namespace roboReaderAssistant
 {
@@ -50,17 +51,292 @@ namespace roboReaderAssistant
 
                 comboBox2.SelectedIndex = 0;
 
-                progressBar.Visible = false;
-                progressLabel.Visible = false;
+                progressBar.Visible = true;
+                progressLabel.Visible = true;
 
             }
         }
 
 
-        public void changeSize(int width, int height)
+        // ########################################################################################################
+
+
+        // MAIN ROUTINES
+
+
+        private async void renameFoldersButton(object sender, EventArgs e)
         {
-            this.Size = new Size(width, height);
+            var renameResult = await renameAllFoldersTask(this);
         }
+
+        private async Task<int> renameAllFoldersTask(Form fm)
+        {
+            await Task.Run(() =>
+            {
+                // Set cursor as hourglass
+                Cursor.Current = Cursors.WaitCursor;
+
+                if (textBox1.Text != "undefined" && textBox1.Text.Length > 0)
+                {
+
+                    // GET ALL DIRECT SUBFOLDERS
+                    var directories = Directory.GetDirectories(textBox1.Text);
+
+                    List<string> folderNames = new List<string>();
+
+                    // FILTER FOR IMP FOLDERS
+                    foreach (var directory in directories)
+                    {
+                        string resultString = directory.ToString().Split(new string[] { textBox1.Text + "\\" }, StringSplitOptions.None)[1];
+
+                        if (resultString.StartsWith("imp"))
+                        {
+                            folderNames.Add(directory.ToString());
+                        }
+                    }
+
+
+                    // INIT PROGRESSBAR
+                    int folderNamesCount = folderNames.Count;
+
+                    initializeProgressbar(folderNamesCount);
+      
+                    // TRACK ALL RENAMED FOLDERS
+                    List<string> renamedFolderNames = new List<string>();
+
+                    // COLLECT ALL MESSAGES
+                    List<string> messageList = new List<string>();
+
+                    // COUNT ALL RENAMED FOLDERS
+                    int renamedCount = 0;
+
+                    // COUNT ALL NO DICOMDIR FILE FOLDERS
+                    int noDicomdirFileCount = 0;
+
+                    List<DicomEntry> myList = new List<DicomEntry>();
+
+                    foreach (string folderName in folderNames)
+                    {
+                        myList.Clear();
+
+                        string filePath = folderName + "\\DICOMDIR";
+
+                        bool fileExists = File.Exists(filePath);
+                        if (fileExists)
+                        {
+                            // <--CPU INTENSIVE-->
+                            myList = readDicomFile(filePath);
+
+                            bool entryFound = false;
+                            DicomEntry foundEntry = new DicomEntry();
+
+                            string tagText = "";
+                            if (comboBox2.InvokeRequired)
+                            {
+                                comboBox2.Invoke(new MethodInvoker(delegate { tagText = comboBox2.Text; }));
+                            }
+                            else
+                            {
+                                tagText = comboBox2.Text;
+                            }
+                            
+
+                            foreach (DicomEntry entry in myList)
+                            {
+                                if (entry.dicomKeyword == tagText)
+                                {
+                                    entryFound = true;
+                                    foundEntry = entry;
+                                }
+                            }
+
+                            if (entryFound)
+                            {
+
+                                string value = "";
+
+                                for (int i = 0; i < foundEntry.dicomValueList.Count; i++)
+                                {
+                                    value = value + foundEntry.dicomValueList[i];
+
+                                    if (i != foundEntry.dicomValueList.Count - 1)
+                                    {
+                                        value = value + "_";
+                                    }
+                                }
+
+
+                                string[] destinationFolderSplit = folderName.Split(new string[] { "\\" }, StringSplitOptions.None);
+                                string destinationFolderName = "";
+
+                                for (int i = 0; i < destinationFolderSplit.Length - 1; i++)
+                                {
+                                    if (i == 0)
+                                    {
+                                        destinationFolderName = destinationFolderName + destinationFolderSplit[i];
+                                    }
+                                    else
+                                    {
+                                        destinationFolderName = destinationFolderName + "\\" + destinationFolderSplit[i];
+                                    }
+
+                                }
+                                destinationFolderName = destinationFolderName + "\\" + value;
+
+                                try
+                                {
+                                    if (!renamedFolderNames.Contains(value))
+                                    {
+                                        renamedFolderNames.Add(value);
+
+                                        // RENAME
+                                        Directory.Move(folderName, destinationFolderName);
+                                        //messageList.Add(getFolderNameOfAbsolutePath(folderName) + " renamed to " + getFolderNameOfAbsolutePath(destinationFolderName)  + ".");
+                                        renamedCount++;
+                                    }
+                                    else
+                                    {
+                                        for (int i = 0; i < 1000; i++)
+                                        {
+                                            string countedValue = value + "_" + i;
+                                            if (!renamedFolderNames.Contains(countedValue))
+                                            {
+                                                renamedFolderNames.Add(countedValue);
+
+                                                // FALLBACK RENAME 
+                                                Directory.Move(folderName, destinationFolderName + "_" + i);
+                                                //messageList.Add(getFolderNameOfAbsolutePath(folderName) + "renamed to " + getFolderNameOfAbsolutePath(destinationFolderName) + ".");
+                                                renamedCount++;
+
+                                                break;
+                                            }
+                                        }
+                                    }
+
+                                }
+                                catch (Exception ex)
+                                {
+                                    MessageBox.Show("An error has occured: " + ex.Message, "Error",
+                                                                     MessageBoxButtons.OK,
+                                                                     MessageBoxIcon.Error);
+                                }
+
+                            }
+                            else
+                            {
+                                //var result = MessageBox.Show("Tag not found.", "Error",
+
+                                messageList.Add("Tag not found in directory " + getFolderNameOfAbsolutePath(folderName) + ".");
+                            }
+                        }
+                        else
+                        {
+                            //messageList.Add("Error: DICOMDIR file missing in directory " + getFolderNameOfAbsolutePath(folderName));
+                            noDicomdirFileCount++;
+                        }
+
+                        // Perform the increment on the ProgressBar.
+                        if (progressBar.InvokeRequired)
+                        {
+                            progressBar.Invoke(new MethodInvoker(delegate { progressBar.PerformStep(); }));
+                        }
+                        else
+                        {
+                            progressBar.PerformStep();
+                        }
+                        
+                    }
+
+                    // Set cursor as default arrow
+                    Cursor.Current = Cursors.Default;
+
+                    if (renamedCount == 0)
+                    {
+                        messageList.Add("No folders renamed.");
+                    }
+                    if (renamedCount == 1)
+                    {
+                        messageList.Add("Renamed " + renamedCount + " folder.");
+                    }
+                    if (renamedCount > 1)
+                    {
+                        messageList.Add("Renamed " + renamedCount + " folders.");
+                    }
+
+                    // NO DICOMDIR FILE CASE
+                    if (noDicomdirFileCount == 1)
+                    {
+                        messageList.Add("Found " + noDicomdirFileCount + " folder without DICOMDIR file.");
+                    }
+                    if (noDicomdirFileCount > 1)
+                    {
+                        messageList.Add("Found " + noDicomdirFileCount + " folders without DICOMDIR file.");
+                    }
+
+
+                    if (messageList.Count > 0)
+                    {
+                        // SORT MESSAGE LIST
+                        messageList.Sort();
+
+                        // JOIN MESSAGE LIST STRINGS AND SHOW MESSAGEBOX
+                        var message = string.Join(Environment.NewLine, messageList.ToArray());
+                        DialogResult dialogResult = MessageBox.Show(message, "Action Log", MessageBoxButtons.OK,
+                                     MessageBoxIcon.Information);
+                        if (dialogResult == DialogResult.OK)
+                        {
+
+                            initializeProgressbar(folderNamesCount);
+                        }
+                    }
+
+
+                }
+            });
+
+
+
+
+
+            return 0;
+        }
+
+        private void initializeProgressbar(int folderNamesCount)
+        {
+            // Initialize/Refresh the ProgressBar control.
+            if (progressBar.InvokeRequired)
+            {
+                // Set Minimum to 1 to represent the first file being copied.
+                progressBar.Invoke(new MethodInvoker(delegate { progressBar.Minimum = 1; }));
+
+                // Set Maximum to the total number of files to copy.
+                progressBar.Invoke(new MethodInvoker(delegate { progressBar.Maximum = folderNamesCount; }));
+
+                // Set the initial value of the ProgressBar.
+                progressBar.Invoke(new MethodInvoker(delegate { progressBar.Value = 1; }));
+
+                // Set the Step property to a value of 1 to represent each file being copied.
+                progressBar.Invoke(new MethodInvoker(delegate { progressBar.Step = 1; }));
+
+            }
+            else
+            {
+                // Set Minimum to 1 to represent the first file being copied.
+                progressBar.Invoke(new MethodInvoker(delegate { progressBar.Minimum = 1; }));
+
+                // Set Maximum to the total number of files to copy.
+                progressBar.Invoke(new MethodInvoker(delegate { progressBar.Maximum = folderNamesCount; }));
+
+                // Set the initial value of the ProgressBar.
+                progressBar.Invoke(new MethodInvoker(delegate { progressBar.Value = 1; }));
+
+                // Set the Step property to a value of 1 to represent each file being copied.
+                progressBar.Invoke(new MethodInvoker(delegate { progressBar.Step = 1; }));
+
+
+            }
+        }
+
 
         private void resetFolderNamesButton(object sender, EventArgs e)
         {
@@ -90,7 +366,7 @@ namespace roboReaderAssistant
                     folderNames.Add(resultString);
 
                     var sourcePath = textBox1.Text + "\\" + resultString;
-                    while(Directory.Exists(textBox1.Text + "\\" + "imp_" + i))
+                    while (Directory.Exists(textBox1.Text + "\\" + "imp_" + i))
                     {
                         i++;
                     }
@@ -102,7 +378,7 @@ namespace roboReaderAssistant
                         renamedFolderCount++;
                     }
 
-                    
+
                 }
 
                 System.Threading.Thread.Sleep(1000);
@@ -120,6 +396,20 @@ namespace roboReaderAssistant
 
 
         }
+
+
+        // ########################################################################################################
+
+
+
+        // MISC
+
+        public void changeSize(int width, int height)
+        {
+            this.Size = new Size(width, height);
+        }
+
+
 
 
         public string concatenateAllSubNodeValues(XmlNode node)
@@ -225,221 +515,8 @@ namespace roboReaderAssistant
             return returnString[returnString.Length - 1];
         }
 
-        private void renameAllFolders(object sender, EventArgs e)
-        {
-            // Set cursor as hourglass
-            Cursor.Current = Cursors.WaitCursor;
 
-            if (textBox1.Text != "undefined" && textBox1.Text.Length > 0)
-            {
-
-                // GET ALL DIRECT SUBFOLDERS
-                var directories = Directory.GetDirectories(textBox1.Text);
-
-                List<string> folderNames = new List<string>();
-
-                // FILTER FOR IMP FOLDERS
-                foreach (var directory in directories)
-                {
-                    string resultString = directory.ToString().Split(new string[] { textBox1.Text + "\\"}, StringSplitOptions.None)[1];
-                    
-                    if (resultString.StartsWith("imp"))
-                    {
-                        folderNames.Add(directory.ToString());
-                    }                    
-                }
-
-
-                // INIT PROGRESSBAR
-
-                // Display the ProgressBar control.
-                progressBar.Visible = true;
-                progressLabel.Visible = true;
-
-                // Set Minimum to 1 to represent the first file being copied.
-                progressBar.Minimum = 1;
-                // Set Maximum to the total number of files to copy.
-                progressBar.Maximum = folderNames.Count;
-                // Set the initial value of the ProgressBar.
-                progressBar.Value = 1;
-                // Set the Step property to a value of 1 to represent each file being copied.
-                progressBar.Step = 1;
-
-
-                // TRACK ALL RENAMED FOLDERS
-                List<string> renamedFolderNames = new List<string>();
-
-                // COLLECT ALL MESSAGES
-                List<string> messageList = new List<string>();
-
-                // COUNT ALL RENAMED FOLDERS
-                int renamedCount = 0;
-
-                // COUNT ALL NO DICOMDIR FILE FOLDERS
-                int noDicomdirFileCount = 0;
-
-                List<DicomEntry> myList = new List<DicomEntry>();
-
-                foreach (string folderName in folderNames)
-                {
-                    myList.Clear();
-
-                    string filePath = folderName + "\\DICOMDIR";
-
-                    bool fileExists = File.Exists(filePath);
-                    if (fileExists)
-                    {
-                        myList = readDicomFile(filePath);
-                        bool entryFound = false;
-                        DicomEntry foundEntry = new DicomEntry();
-
-                        foreach (DicomEntry entry in myList)
-                        {
-                            if (entry.dicomKeyword == comboBox2.Text)
-                            {
-                                entryFound = true;
-                                foundEntry = entry;
-                            }
-                        }
-
-                        if (entryFound)
-                        {
-
-                            string value  = "";
-
-                            for (int i = 0; i < foundEntry.dicomValueList.Count; i++)
-                            {
-                                value = value + foundEntry.dicomValueList[i];
-
-                                if (i != foundEntry.dicomValueList.Count - 1)
-                                {
-                                    value = value + "_";
-                                }
-                            }
-
-
-                            string[] destinationFolderSplit = folderName.Split(new string[] { "\\" }, StringSplitOptions.None);
-                            string destinationFolderName = "";
-
-                            for (int i = 0; i < destinationFolderSplit.Length - 1; i++)
-                            {
-                                if (i == 0)
-                                {
-                                    destinationFolderName = destinationFolderName + destinationFolderSplit[i];
-                                }
-                                else
-                                {
-                                    destinationFolderName = destinationFolderName + "\\" + destinationFolderSplit[i];
-                                }
-
-                            }
-                            destinationFolderName = destinationFolderName + "\\" + value;
-
-                            try
-                            {
-                                if (!renamedFolderNames.Contains(value))
-                                {
-                                    renamedFolderNames.Add(value);
-
-                                    // RENAME
-                                    Directory.Move(folderName, destinationFolderName);
-                                    //messageList.Add(getFolderNameOfAbsolutePath(folderName) + " renamed to " + getFolderNameOfAbsolutePath(destinationFolderName)  + ".");
-                                    renamedCount++;
-                                }
-                                else
-                                {
-                                    for (int i = 0; i < 1000; i++)
-                                    {
-                                        string countedValue = value + "_" + i;
-                                        if (!renamedFolderNames.Contains(countedValue))
-                                        {
-                                            renamedFolderNames.Add(countedValue);
-
-                                            // FALLBACK RENAME 
-                                            Directory.Move(folderName, destinationFolderName + "_" + i);
-                                            //messageList.Add(getFolderNameOfAbsolutePath(folderName) + "renamed to " + getFolderNameOfAbsolutePath(destinationFolderName) + ".");
-                                            renamedCount++;
-
-                                            break;
-                                        }
-                                    }
-                                }
-
-                            }
-                            catch (Exception ex)
-                            {
-                                MessageBox.Show("An error has occured: " + ex.Message, "Error",
-                                                                 MessageBoxButtons.OK,
-                                                                 MessageBoxIcon.Error);
-                            }
-
-                        }
-                        else
-                        {
-                            //var result = MessageBox.Show("Tag not found.", "Error",
-                                 
-                            messageList.Add("Tag not found in directory " + getFolderNameOfAbsolutePath(folderName) + ".");
-                        }
-                    }
-                    else
-                    {
-                        //messageList.Add("Error: DICOMDIR file missing in directory " + getFolderNameOfAbsolutePath(folderName));
-                        noDicomdirFileCount++;
-                    }
-
-                    // Perform the increment on the ProgressBar.
-                    progressBar.PerformStep();
-                }
-                
-                if (renamedCount == 0)
-                {
-                    messageList.Add("No folders renamed.");
-                }
-                if (renamedCount == 1)
-                {
-                    messageList.Add("Renamed " + renamedCount + " folder.");
-                }
-                if (renamedCount > 1)
-                {
-                    messageList.Add("Renamed " + renamedCount + " folders.");
-                }
-
-                // NO DICOMDIR FILE CASE
-                if (noDicomdirFileCount == 1)
-                {
-                    messageList.Add("Found " + noDicomdirFileCount + " folder without DICOMDIR file.");
-                }
-                if (noDicomdirFileCount > 1)
-                {
-                    messageList.Add("Found " + noDicomdirFileCount + " folders without DICOMDIR file.");
-                }
-
-
-                if (messageList.Count > 0)
-                {    
-                    // SORT MESSAGE LIST
-                    messageList.Sort();
-
-                    // JOIN MESSAGE LIST STRINGS AND SHOW MESSAGEBOX
-                    var message = string.Join(Environment.NewLine, messageList.ToArray());
-                    DialogResult dialogResult = MessageBox.Show(message, "Action Log", MessageBoxButtons.OK,
-                                 MessageBoxIcon.Information);
-                    if (dialogResult == DialogResult.OK)
-                    {
-                        // Hide the ProgressBar control again
-                        progressBar.Visible = false;
-                        progressLabel.Visible = false;
-
-                    }
-                }
-                
-
-            }
-
-            // Set cursor as default arrow
-            Cursor.Current = Cursors.Default;
-        }
-
+      
 
         public List<DicomEntry> readDicomFile(string folderPath)
         {
@@ -895,8 +972,10 @@ namespace roboReaderAssistant
 
         private void Form1_SizeChanged(object sender, EventArgs e)
         {
-            changeSize(850, 380);
+            changeSize(850, 420);
         }
+
+      
 
 
 
