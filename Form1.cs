@@ -8,6 +8,7 @@ using Dicom.Media;
 using Dicom.Serialization;
 using System.Xml;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace roboReaderAssistant
 {
@@ -182,6 +183,14 @@ namespace roboReaderAssistant
             return entries;
         }
 
+
+        public string getFolderNameOfAbsolutePath(string absPath)
+        {
+            string[] returnString = absPath.Split(new string[] { "\\" }, StringSplitOptions.None);
+
+            return returnString[returnString.Length - 1];
+        }
+
         private void renameAllFolders(object sender, EventArgs e)
         {
             if (textBox1.Text != "undefined" && textBox1.Text.Length > 0)
@@ -205,6 +214,10 @@ namespace roboReaderAssistant
 
                 // TRACK ALL RENAMED FOLDERS
                 List<string> renamedFolderNames = new List<string>();
+
+                // COLLECT ALL MESSAGES
+                List<string> messageList = new List<string>();
+
 
                 foreach (string folderName in folderNames)
                 {
@@ -232,7 +245,7 @@ namespace roboReaderAssistant
                             //Console.WriteLine("Value found for: " + entry.dicomKeyword);
                             //var result = MessageBox.Show(entry.dicomValueList[0], "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                            string value = "";
+                            string value  = "";
 
                             for (int i = 0; i < foundEntry.dicomValueList.Count; i++)
                             {
@@ -270,7 +283,10 @@ namespace roboReaderAssistant
                                 if (!renamedFolderNames.Contains(value))
                                 {
                                     renamedFolderNames.Add(value);
+
+                                    // RENAME
                                     Directory.Move(folderName, destinationFolderName);
+                                    messageList.Add(getFolderNameOfAbsolutePath(folderName) + " renamed to " + getFolderNameOfAbsolutePath(destinationFolderName));
                                 }
                                 else
                                 {
@@ -280,7 +296,11 @@ namespace roboReaderAssistant
                                         if (!renamedFolderNames.Contains(countedValue))
                                         {
                                             renamedFolderNames.Add(countedValue);
+
+                                            // FALLBACK RENAME 
                                             Directory.Move(folderName, destinationFolderName + "_" + i);
+                                            messageList.Add(getFolderNameOfAbsolutePath(folderName) + "renamed to " + getFolderNameOfAbsolutePath(destinationFolderName));
+
                                             break;
                                         }
                                     }
@@ -295,15 +315,20 @@ namespace roboReaderAssistant
                             }
 
                         }
+                        else
+                        {
+                            //var result = MessageBox.Show("Tag not found.", "Error",
+                                 
+                            messageList.Add("Tag not found in directory " + getFolderNameOfAbsolutePath(folderName));
+                        }
                     }
                     else
                     {
-                        var result = MessageBox.Show("An error has occured. DICOMDIR file missing in directory (" + textBox1.Text + ").", "Error",
-                                         MessageBoxButtons.OK,
-                                         MessageBoxIcon.Error);
-                    }
+                        messageList.Add("Error: DICOMDIR file missing in directory " + getFolderNameOfAbsolutePath(folderName));
+                    }              
                 }
 
+                /*
                 if (renamedFolderNames.Count > 0)
                 {
                     var result = MessageBox.Show("Folders have been renamed.", "Success",
@@ -312,10 +337,20 @@ namespace roboReaderAssistant
                 }
                 if (renamedFolderNames.Count == 0)
                 {
-                    var result = MessageBox.Show("No Imp* Folders found.", "Information",
+                    var result = MessageBox.Show("No Folders renamed.", "Information",
                              MessageBoxButtons.OK,
                              MessageBoxIcon.Information);
                 }
+                */
+
+                if (messageList.Count > 0)
+                {
+                    messageList.Sort();
+                    var message = string.Join(Environment.NewLine, messageList.ToArray());
+                    MessageBox.Show(message, "Action Log", MessageBoxButtons.OK,
+                                 MessageBoxIcon.Information);
+                }
+                
 
             }            
         }
@@ -334,9 +369,21 @@ namespace roboReaderAssistant
                 // CONVERT TO XML
                 string xmlText = DicomXML.WriteToXml(dataset);
 
+                // SANITIZE STRING                
+                Regex estructureXml = new Regex(@"(?<initialTag>\<.+?\>)(?<content>.+?)(?<finalTag>\</.+?\>)", RegexOptions.Compiled);
+                Regex filter = new Regex(@"[^</\w\s="">@.]", RegexOptions.Compiled);
+                string xmlClean = estructureXml.Replace(xmlText, new MatchEvaluator(c =>
+                {
+                    return string.Format("{0}{1}{2}",
+                        c.Groups["initialTag"].Value,
+                        filter.Replace(c.Groups["content"].Value, string.Empty),
+                        c.Groups["finalTag"].Value);
+                }));
+
+
                 // READ INTO XML OBJECT "DOC"
                 XmlDocument doc = new XmlDocument();
-                doc.LoadXml(xmlText);
+                doc.LoadXml(xmlClean);
 
                 // CREATE NODE LIST
                 XmlNodeList nodeList;
