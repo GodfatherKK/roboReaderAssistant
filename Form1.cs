@@ -9,6 +9,7 @@ using Dicom.Serialization;
 using System.Xml;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Drawing;
 
 namespace roboReaderAssistant
 {
@@ -34,8 +35,38 @@ namespace roboReaderAssistant
         // ########################################################################################################
 
 
+        // INIT: ONLOAD HOOK
+        private void initializeForm(object sender, EventArgs e)
+        {
+            if (checkIfConfigFilesExist() == 0)
+            {
+                readFileAndUpdatePath();
+
+                comboBox1.SelectedIndex = 0;
+
+                textBox1.Text = path_Instructions;
+
+                textBox1.ReadOnly = true;
+
+                comboBox2.SelectedIndex = 0;
+
+                progressBar.Visible = false;
+                progressLabel.Visible = false;
+
+            }
+        }
+
+
+        public void changeSize(int width, int height)
+        {
+            this.Size = new Size(width, height);
+        }
+
         private void resetFolderNamesButton(object sender, EventArgs e)
         {
+            // Set cursor as hourglass
+            Cursor.Current = Cursors.WaitCursor;
+
             DialogResult dialogResult = MessageBox.Show("This will reset all folder names in the selected path. Are you sure?", "Folder name reset confirmation", MessageBoxButtons.YesNo);
             if (dialogResult == DialogResult.Yes)
             {
@@ -74,7 +105,7 @@ namespace roboReaderAssistant
                     
                 }
 
-
+                System.Threading.Thread.Sleep(1000);
                 var result = MessageBox.Show(renamedFolderCount + " folder names have been reset.", "Information",
                                  MessageBoxButtons.OK,
                                  MessageBoxIcon.Information);
@@ -84,7 +115,10 @@ namespace roboReaderAssistant
                 //do something else
             }
 
-            
+            // Set cursor as default arrow
+            Cursor.Current = Cursors.Default;
+
+
         }
 
 
@@ -193,6 +227,9 @@ namespace roboReaderAssistant
 
         private void renameAllFolders(object sender, EventArgs e)
         {
+            // Set cursor as hourglass
+            Cursor.Current = Cursors.WaitCursor;
+
             if (textBox1.Text != "undefined" && textBox1.Text.Length > 0)
             {
 
@@ -212,6 +249,23 @@ namespace roboReaderAssistant
                     }                    
                 }
 
+
+                // INIT PROGRESSBAR
+
+                // Display the ProgressBar control.
+                progressBar.Visible = true;
+                progressLabel.Visible = true;
+
+                // Set Minimum to 1 to represent the first file being copied.
+                progressBar.Minimum = 1;
+                // Set Maximum to the total number of files to copy.
+                progressBar.Maximum = folderNames.Count;
+                // Set the initial value of the ProgressBar.
+                progressBar.Value = 1;
+                // Set the Step property to a value of 1 to represent each file being copied.
+                progressBar.Step = 1;
+
+
                 // TRACK ALL RENAMED FOLDERS
                 List<string> renamedFolderNames = new List<string>();
 
@@ -224,14 +278,18 @@ namespace roboReaderAssistant
                 // COUNT ALL NO DICOMDIR FILE FOLDERS
                 int noDicomdirFileCount = 0;
 
+                List<DicomEntry> myList = new List<DicomEntry>();
+
                 foreach (string folderName in folderNames)
                 {
+                    myList.Clear();
+
                     string filePath = folderName + "\\DICOMDIR";
 
                     bool fileExists = File.Exists(filePath);
                     if (fileExists)
                     {
-                        List<DicomEntry> myList = readDicomFile(filePath);
+                        myList = readDicomFile(filePath);
                         bool entryFound = false;
                         DicomEntry foundEntry = new DicomEntry();
 
@@ -327,7 +385,10 @@ namespace roboReaderAssistant
                     {
                         //messageList.Add("Error: DICOMDIR file missing in directory " + getFolderNameOfAbsolutePath(folderName));
                         noDicomdirFileCount++;
-                    }              
+                    }
+
+                    // Perform the increment on the ProgressBar.
+                    progressBar.PerformStep();
                 }
                 
                 if (renamedCount == 0)
@@ -361,12 +422,22 @@ namespace roboReaderAssistant
 
                     // JOIN MESSAGE LIST STRINGS AND SHOW MESSAGEBOX
                     var message = string.Join(Environment.NewLine, messageList.ToArray());
-                    MessageBox.Show(message, "Action Log", MessageBoxButtons.OK,
+                    DialogResult dialogResult = MessageBox.Show(message, "Action Log", MessageBoxButtons.OK,
                                  MessageBoxIcon.Information);
+                    if (dialogResult == DialogResult.OK)
+                    {
+                        // Hide the ProgressBar control again
+                        progressBar.Visible = false;
+                        progressLabel.Visible = false;
+
+                    }
                 }
                 
 
-            }            
+            }
+
+            // Set cursor as default arrow
+            Cursor.Current = Cursors.Default;
         }
 
 
@@ -554,24 +625,6 @@ namespace roboReaderAssistant
 
        
 
-
-        // ONLOAD HOOK
-        private void Form1_Load(object sender, EventArgs e)
-        {
-                if (checkIfConfigFilesExist() == 0)
-                {
-                    readFileAndUpdatePath();
-
-                    comboBox1.SelectedIndex = 0;
-
-                    textBox1.Text = path_Instructions;
-
-                    textBox1.ReadOnly = true;
-
-                    comboBox2.SelectedIndex = 0;
-                    
-                 }                
-        }
 
         // COMBOBOX SELECTED INDEX CHANGED
         private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
@@ -840,7 +893,12 @@ namespace roboReaderAssistant
             }
         }
 
-        
+        private void Form1_SizeChanged(object sender, EventArgs e)
+        {
+            changeSize(850, 380);
+        }
+
+
 
 
 
