@@ -60,7 +60,7 @@ namespace roboReaderAssistant
 
                     var sourcePath = textBox1.Text + "\\" + resultString;
                     while(Directory.Exists(textBox1.Text + "\\" + "imp_" + i))
-                        {
+                    {
                         i++;
                     }
                     var targetPath = textBox1.Text + "\\" + "imp_" + i;
@@ -218,12 +218,16 @@ namespace roboReaderAssistant
                 // COLLECT ALL MESSAGES
                 List<string> messageList = new List<string>();
 
+                // COUNT ALL RENAMED FOLDERS
+                int renamedCount = 0;
+
+                // COUNT ALL NO DICOMDIR FILE FOLDERS
+                int noDicomdirFileCount = 0;
 
                 foreach (string folderName in folderNames)
                 {
                     string filePath = folderName + "\\DICOMDIR";
 
-                    Console.WriteLine(filePath);
                     bool fileExists = File.Exists(filePath);
                     if (fileExists)
                     {
@@ -242,8 +246,6 @@ namespace roboReaderAssistant
 
                         if (entryFound)
                         {
-                            //Console.WriteLine("Value found for: " + entry.dicomKeyword);
-                            //var result = MessageBox.Show(entry.dicomValueList[0], "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                             string value  = "";
 
@@ -257,9 +259,6 @@ namespace roboReaderAssistant
                                 }
                             }
 
-                            Console.WriteLine("value: " + value);
-                            Console.WriteLine("folderName: " + folderName);
-                            Console.WriteLine("newFolderName: " + value);
 
                             string[] destinationFolderSplit = folderName.Split(new string[] { "\\" }, StringSplitOptions.None);
                             string destinationFolderName = "";
@@ -286,7 +285,8 @@ namespace roboReaderAssistant
 
                                     // RENAME
                                     Directory.Move(folderName, destinationFolderName);
-                                    messageList.Add(getFolderNameOfAbsolutePath(folderName) + " renamed to " + getFolderNameOfAbsolutePath(destinationFolderName));
+                                    //messageList.Add(getFolderNameOfAbsolutePath(folderName) + " renamed to " + getFolderNameOfAbsolutePath(destinationFolderName)  + ".");
+                                    renamedCount++;
                                 }
                                 else
                                 {
@@ -299,7 +299,8 @@ namespace roboReaderAssistant
 
                                             // FALLBACK RENAME 
                                             Directory.Move(folderName, destinationFolderName + "_" + i);
-                                            messageList.Add(getFolderNameOfAbsolutePath(folderName) + "renamed to " + getFolderNameOfAbsolutePath(destinationFolderName));
+                                            //messageList.Add(getFolderNameOfAbsolutePath(folderName) + "renamed to " + getFolderNameOfAbsolutePath(destinationFolderName) + ".");
+                                            renamedCount++;
 
                                             break;
                                         }
@@ -319,33 +320,46 @@ namespace roboReaderAssistant
                         {
                             //var result = MessageBox.Show("Tag not found.", "Error",
                                  
-                            messageList.Add("Tag not found in directory " + getFolderNameOfAbsolutePath(folderName));
+                            messageList.Add("Tag not found in directory " + getFolderNameOfAbsolutePath(folderName) + ".");
                         }
                     }
                     else
                     {
-                        messageList.Add("Error: DICOMDIR file missing in directory " + getFolderNameOfAbsolutePath(folderName));
+                        //messageList.Add("Error: DICOMDIR file missing in directory " + getFolderNameOfAbsolutePath(folderName));
+                        noDicomdirFileCount++;
                     }              
                 }
+                
+                if (renamedCount == 0)
+                {
+                    messageList.Add("No folders renamed.");
+                }
+                if (renamedCount == 1)
+                {
+                    messageList.Add("Renamed " + renamedCount + " folder.");
+                }
+                if (renamedCount > 1)
+                {
+                    messageList.Add("Renamed " + renamedCount + " folders.");
+                }
 
-                /*
-                if (renamedFolderNames.Count > 0)
+                // NO DICOMDIR FILE CASE
+                if (noDicomdirFileCount == 1)
                 {
-                    var result = MessageBox.Show("Folders have been renamed.", "Success",
-                             MessageBoxButtons.OK,
-                             MessageBoxIcon.Information);
+                    messageList.Add("Found " + noDicomdirFileCount + " folder without DICOMDIR file.");
                 }
-                if (renamedFolderNames.Count == 0)
+                if (noDicomdirFileCount > 1)
                 {
-                    var result = MessageBox.Show("No Folders renamed.", "Information",
-                             MessageBoxButtons.OK,
-                             MessageBoxIcon.Information);
+                    messageList.Add("Found " + noDicomdirFileCount + " folders without DICOMDIR file.");
                 }
-                */
+
 
                 if (messageList.Count > 0)
-                {
+                {    
+                    // SORT MESSAGE LIST
                     messageList.Sort();
+
+                    // JOIN MESSAGE LIST STRINGS AND SHOW MESSAGEBOX
                     var message = string.Join(Environment.NewLine, messageList.ToArray());
                     MessageBox.Show(message, "Action Log", MessageBoxButtons.OK,
                                  MessageBoxIcon.Information);
@@ -479,63 +493,7 @@ namespace roboReaderAssistant
                 }
             }
         }
-
-
-
-
-        
-
-
-
-        // READ DICOM FILE (not working)
-        public void ReadFile(string filename)
-        {
-            using (FileStream fs = File.OpenRead(filename))
-            {
-                fs.Seek(128, SeekOrigin.Begin);
-                if ((fs.ReadByte() != (byte)'D' ||
-                     fs.ReadByte() != (byte)'I' ||
-                     fs.ReadByte() != (byte)'C' ||
-                     fs.ReadByte() != (byte)'M'))
-                {
-                    Console.WriteLine("Not a DCM");
-                    return;
-                }
-                BinaryReader reader = new BinaryReader(fs);
-
-                ushort g;
-                ushort e;
-                do
-                {
-                    g = reader.ReadUInt16();
-                    e = reader.ReadUInt16();
-
-                    string vr = new string(reader.ReadChars(2));
-                    long length;
-                    if (vr.Equals("AE") || vr.Equals("AS") || vr.Equals("AT")
-                        || vr.Equals("CS") || vr.Equals("DA") || vr.Equals("DS")
-                        || vr.Equals("DT") || vr.Equals("FL") || vr.Equals("FD")
-                        || vr.Equals("IS") || vr.Equals("LO") || vr.Equals("PN")
-                        || vr.Equals("SH") || vr.Equals("SL") || vr.Equals("SS")
-                        || vr.Equals("ST") || vr.Equals("TM") || vr.Equals("UI")
-                        || vr.Equals("UL") || vr.Equals("US"))
-                        length = reader.ReadUInt16();
-                    else
-                    {
-                        // Read the reserved byte
-                        reader.ReadUInt16();
-                        length = reader.ReadUInt32();
-                    }
-
-                    byte[] val = reader.ReadBytes((int)length);
-
-                } while (g == 2);
-
-                fs.Close();
-            }
-
-            return;
-        }
+ 
 
         // ########################################################################################################
         
