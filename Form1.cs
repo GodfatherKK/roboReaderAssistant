@@ -122,11 +122,12 @@ namespace roboReaderAssistant
                         string filePath = folderName + "\\DICOMDIR";
 
                         bool fileExists = File.Exists(filePath);
-                        if (fileExists)
+                        if (fileExists && new FileInfo(filePath).Length != 0)
                         {
                             // <--CPU INTENSIVE-->
                             myList = readDicomFile(filePath);
 
+                            
                             bool entryFound = false;
                             DicomEntry foundEntry = new DicomEntry();
 
@@ -508,6 +509,7 @@ namespace roboReaderAssistant
         }
 
 
+
         public string getFolderNameOfAbsolutePath(string absPath)
         {
             string[] returnString = absPath.Split(new string[] { "\\" }, StringSplitOptions.None);
@@ -520,6 +522,8 @@ namespace roboReaderAssistant
 
         public List<DicomEntry> readDicomFile(string folderPath)
         {
+      
+
             if (File.Exists(folderPath))
             {
                 // OPEN DICOM FILE
@@ -527,6 +531,7 @@ namespace roboReaderAssistant
 
                 // GET DATASET OF DICOM FILE
                 DicomDataset dataset = file.Dataset;
+          
 
                 // CONVERT TO XML
                 string xmlText = DicomXML.WriteToXml(dataset);
