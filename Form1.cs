@@ -113,6 +113,12 @@ namespace roboReaderAssistant
                     // COUNT ALL NO DICOMDIR FILE FOLDERS
                     int noDicomdirFileCount = 0;
 
+                    // COUNT ALL EMPTY FOLDERS
+                    int dicomFileIsEmptyCounter = 0;
+
+                    // COUNT ALL ENCRYPTED OR CORRUPTED FOLDERS
+                    int dicomFileIsEncryptedOrCorrupted = 0;
+
                     List<DicomEntry> myList = new List<DicomEntry>();
 
                     foreach (string folderName in folderNames)
@@ -122,113 +128,127 @@ namespace roboReaderAssistant
                         string filePath = folderName + "\\DICOMDIR";
 
                         bool fileExists = File.Exists(filePath);
-                        if (fileExists && new FileInfo(filePath).Length != 0)
+                        bool fileIsEmpty = new FileInfo(filePath).Length == 0;
+
+                        if (fileIsEmpty)
+                        {
+                            dicomFileIsEmptyCounter++;
+                        }
+
+                        if (fileExists &&  !fileIsEmpty)
                         {
                             // <--CPU INTENSIVE-->
                             myList = readDicomFile(filePath);
 
-                            
-                            bool entryFound = false;
-                            DicomEntry foundEntry = new DicomEntry();
-
-                            string tagText = "";
-                            if (comboBox2.InvokeRequired)
+                            if (myList == null)
                             {
-                                comboBox2.Invoke(new MethodInvoker(delegate { tagText = comboBox2.Text; }));
+                                dicomFileIsEncryptedOrCorrupted++;                                
                             }
                             else
                             {
-                                tagText = comboBox2.Text;
-                            }
+                                bool entryFound = false;
+                                DicomEntry foundEntry = new DicomEntry();
+
+                                string tagText = "";
+                                if (comboBox2.InvokeRequired)
+                                {
+                                    comboBox2.Invoke(new MethodInvoker(delegate { tagText = comboBox2.Text; }));
+                                }
+                                else
+                                {
+                                    tagText = comboBox2.Text;
+                                }
                             
 
-                            foreach (DicomEntry entry in myList)
-                            {
-                                if (entry.dicomKeyword == tagText)
+                                foreach (DicomEntry entry in myList)
                                 {
-                                    entryFound = true;
-                                    foundEntry = entry;
-                                }
-                            }
-
-                            if (entryFound)
-                            {
-
-                                string value = "";
-
-                                for (int i = 0; i < foundEntry.dicomValueList.Count; i++)
-                                {
-                                    value = value + foundEntry.dicomValueList[i];
-
-                                    if (i != foundEntry.dicomValueList.Count - 1)
+                                    if (entry.dicomKeyword == tagText)
                                     {
-                                        value = value + "_";
+                                        entryFound = true;
+                                        foundEntry = entry;
                                     }
                                 }
 
-
-                                string[] destinationFolderSplit = folderName.Split(new string[] { "\\" }, StringSplitOptions.None);
-                                string destinationFolderName = "";
-
-                                for (int i = 0; i < destinationFolderSplit.Length - 1; i++)
+                                if (entryFound)
                                 {
-                                    if (i == 0)
-                                    {
-                                        destinationFolderName = destinationFolderName + destinationFolderSplit[i];
-                                    }
-                                    else
-                                    {
-                                        destinationFolderName = destinationFolderName + "\\" + destinationFolderSplit[i];
-                                    }
 
-                                }
-                                destinationFolderName = destinationFolderName + "\\" + value;
+                                    string value = "";
 
-                                try
-                                {
-                                    if (!renamedFolderNames.Contains(value))
+                                    for (int i = 0; i < foundEntry.dicomValueList.Count; i++)
                                     {
-                                        renamedFolderNames.Add(value);
+                                        value = value + foundEntry.dicomValueList[i];
 
-                                        // RENAME
-                                        Directory.Move(folderName, destinationFolderName);
-                                        //messageList.Add(getFolderNameOfAbsolutePath(folderName) + " renamed to " + getFolderNameOfAbsolutePath(destinationFolderName)  + ".");
-                                        renamedCount++;
-                                    }
-                                    else
-                                    {
-                                        for (int i = 0; i < 1000; i++)
+                                        if (i != foundEntry.dicomValueList.Count - 1)
                                         {
-                                            string countedValue = value + "_" + i;
-                                            if (!renamedFolderNames.Contains(countedValue))
-                                            {
-                                                renamedFolderNames.Add(countedValue);
-
-                                                // FALLBACK RENAME 
-                                                Directory.Move(folderName, destinationFolderName + "_" + i);
-                                                //messageList.Add(getFolderNameOfAbsolutePath(folderName) + "renamed to " + getFolderNameOfAbsolutePath(destinationFolderName) + ".");
-                                                renamedCount++;
-
-                                                break;
-                                            }
+                                            value = value + "_";
                                         }
                                     }
 
+
+                                    string[] destinationFolderSplit = folderName.Split(new string[] { "\\" }, StringSplitOptions.None);
+                                    string destinationFolderName = "";
+
+                                    for (int i = 0; i < destinationFolderSplit.Length - 1; i++)
+                                    {
+                                        if (i == 0)
+                                        {
+                                            destinationFolderName = destinationFolderName + destinationFolderSplit[i];
+                                        }
+                                        else
+                                        {
+                                            destinationFolderName = destinationFolderName + "\\" + destinationFolderSplit[i];
+                                        }
+
+                                    }
+                                    destinationFolderName = destinationFolderName + "\\" + value;
+
+                                    try
+                                    {
+                                        if (!renamedFolderNames.Contains(value))
+                                        {
+                                            renamedFolderNames.Add(value);
+
+                                            // RENAME
+                                            Directory.Move(folderName, destinationFolderName);
+                                            //messageList.Add(getFolderNameOfAbsolutePath(folderName) + " renamed to " + getFolderNameOfAbsolutePath(destinationFolderName)  + ".");
+                                            renamedCount++;
+                                        }
+                                        else
+                                        {
+                                            for (int i = 0; i < 1000; i++)
+                                            {
+                                                string countedValue = value + "_" + i;
+                                                if (!renamedFolderNames.Contains(countedValue))
+                                                {
+                                                    renamedFolderNames.Add(countedValue);
+
+                                                    // FALLBACK RENAME 
+                                                    Directory.Move(folderName, destinationFolderName + "_" + i);
+                                                    //messageList.Add(getFolderNameOfAbsolutePath(folderName) + "renamed to " + getFolderNameOfAbsolutePath(destinationFolderName) + ".");
+                                                    renamedCount++;
+
+                                                    break;
+                                                }
+                                            }
+                                        }
+
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        MessageBox.Show("An error has occured: " + ex.Message, "Error",
+                                                                         MessageBoxButtons.OK,
+                                                                         MessageBoxIcon.Error);
+                                    }
+
                                 }
-                                catch (Exception ex)
+                                else
                                 {
-                                    MessageBox.Show("An error has occured: " + ex.Message, "Error",
-                                                                     MessageBoxButtons.OK,
-                                                                     MessageBoxIcon.Error);
+                                    //var result = MessageBox.Show("Tag not found.", "Error",
+
+                                    messageList.Add("Tag not found in directory " + getFolderNameOfAbsolutePath(folderName) + ".");
                                 }
-
                             }
-                            else
-                            {
-                                //var result = MessageBox.Show("Tag not found.", "Error",
-
-                                messageList.Add("Tag not found in directory " + getFolderNameOfAbsolutePath(folderName) + ".");
-                            }
+                            
                         }
                         else
                         {
@@ -251,6 +271,29 @@ namespace roboReaderAssistant
                     // Set cursor as default arrow
                     Cursor.Current = Cursors.Default;
 
+
+                    // DICOMDIR FILE IS ENCRYPTED OR CORRUPTED COUNT OUTPUT
+                    if (dicomFileIsEmptyCounter == 1)
+                    {
+                        messageList.Add(dicomFileIsEmptyCounter + " DICOMDIR file is encrypted or corrupted and cannot be read.");
+                    }
+                    if (dicomFileIsEmptyCounter > 1)
+                    {
+                        messageList.Add(dicomFileIsEmptyCounter + " DICOMDIR file is encrypted or corrupted and cannot be read.");
+                    }
+
+
+                    // EMPTY FOLDER COUNT OUTPUT
+                    if (dicomFileIsEmptyCounter == 1)
+                    {
+                        messageList.Add(dicomFileIsEmptyCounter + " DICOMDIR file is empty and cannot be read.");
+                    }
+                    if (dicomFileIsEmptyCounter > 1)
+                    {
+                        messageList.Add(dicomFileIsEmptyCounter + " DICOMDIR file is empty and cannot be read.");
+                    }
+
+                    // RENAMED FOLDER COUNT OUTPUT
                     if (renamedCount == 0)
                     {
                         messageList.Add("No folders renamed.");
@@ -264,7 +307,7 @@ namespace roboReaderAssistant
                         messageList.Add("Renamed " + renamedCount + " folders.");
                     }
 
-                    // NO DICOMDIR FILE CASE
+                    // NO DICOMDIR FILE OUTPUT
                     if (noDicomdirFileCount == 1)
                     {
                         messageList.Add("Found " + noDicomdirFileCount + " folder without DICOMDIR file.");
@@ -526,44 +569,56 @@ namespace roboReaderAssistant
 
             if (File.Exists(folderPath))
             {
-                // OPEN DICOM FILE
-                DicomFile file = DicomFile.Open(folderPath);
+                try 
+                {
+                    // OPEN DICOM FILE
+                    DicomFile file = DicomFile.Open(folderPath);
 
-                // GET DATASET OF DICOM FILE
-                DicomDataset dataset = file.Dataset;
+                    // GET DATASET OF DICOM FILE
+                    DicomDataset dataset = file.Dataset;
           
 
-                // CONVERT TO XML
-                string xmlText = DicomXML.WriteToXml(dataset);
+                    // CONVERT TO XML
+                    string xmlText = DicomXML.WriteToXml(dataset);
 
-                // SANITIZE STRING                
-                Regex estructureXml = new Regex(@"(?<initialTag>\<.+?\>)(?<content>.+?)(?<finalTag>\</.+?\>)", RegexOptions.Compiled);
-                Regex filter = new Regex(@"[^</\w\s="">@.]", RegexOptions.Compiled);
-                string xmlClean = estructureXml.Replace(xmlText, new MatchEvaluator(c =>
+                    // SANITIZE STRING                
+                    Regex estructureXml = new Regex(@"(?<initialTag>\<.+?\>)(?<content>.+?)(?<finalTag>\</.+?\>)", RegexOptions.Compiled);
+                    Regex filter = new Regex(@"[^</\w\s="">@.]", RegexOptions.Compiled);
+                    string xmlClean = estructureXml.Replace(xmlText, new MatchEvaluator(c =>
+                    {
+                        return string.Format("{0}{1}{2}",
+                            c.Groups["initialTag"].Value,
+                            filter.Replace(c.Groups["content"].Value, string.Empty),
+                            c.Groups["finalTag"].Value);
+                    }));
+
+
+                    // READ INTO XML OBJECT "DOC"
+                    XmlDocument doc = new XmlDocument();
+                    doc.LoadXml(xmlClean);
+
+                    // CREATE NODE LIST
+                    XmlNodeList nodeList;
+
+                    // DEFINE ROOT
+                    XmlNode root = doc.DocumentElement;
+
+                    // DEFINE PARENT NODE LIST
+                    nodeList = root.SelectNodes("/NativeDicomModel/DicomAttribute");
+
+                    List<DicomEntry> dicomEntryList = createDicomEntry(nodeList);
+
+                    return dicomEntryList;
+
+                }
+                catch (Exception exp) 
                 {
-                    return string.Format("{0}{1}{2}",
-                        c.Groups["initialTag"].Value,
-                        filter.Replace(c.Groups["content"].Value, string.Empty),
-                        c.Groups["finalTag"].Value);
-                }));
+                    Console.WriteLine(exp.Message);
+                    return null;                    
+                }
+                
 
-
-                // READ INTO XML OBJECT "DOC"
-                XmlDocument doc = new XmlDocument();
-                doc.LoadXml(xmlClean);
-
-                // CREATE NODE LIST
-                XmlNodeList nodeList;
-
-                // DEFINE ROOT
-                XmlNode root = doc.DocumentElement;
-
-                // DEFINE PARENT NODE LIST
-                nodeList = root.SelectNodes("/NativeDicomModel/DicomAttribute");
-
-                List<DicomEntry> dicomEntryList = createDicomEntry(nodeList);
-
-                return dicomEntryList;
+                
             }
             else
             {
